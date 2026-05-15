@@ -43,3 +43,14 @@
 ## Testes
 - [x] Testes vitest para routers de categorias
 - [x] Testes vitest para routers de transações
+
+## Transações Recorrentes
+- [x] Tabela `recurring_transactions` (id, userId, name, amount, type, categoryId, dayOfMonth, active, lastGeneratedMonth, createdAt)
+- [x] Migração e aplicação do schema no banco
+- [x] Router `recurring`: list, create, update, delete, generateForMonth
+- [x] Lógica de geração automática: ao abrir o app, gerar transações do mês atual se ainda não geradas
+- [x] Página de Recorrências com listagem, criação, edição e ativação/desativação
+- [x] Modal de criação/edição de recorrência (nome, valor, tipo, categoria, dia do mês)
+- [x] Badge "Recorrente" nas transações geradas automaticamente
+- [x] Link para Recorrências no sidebar
+- [x] Testes vitest para o router de recorrências

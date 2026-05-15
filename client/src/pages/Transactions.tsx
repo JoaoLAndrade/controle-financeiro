@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { formatCurrency, formatDate, MONTH_NAMES } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
-  ArrowDownRight, ArrowUpRight, Filter, Loader2, MoreHorizontal,
+  ArrowDownRight, ArrowUpRight, CalendarClock, Filter, Loader2, MoreHorizontal,
   Pencil, Plus, Search, Trash2, X
 } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -256,6 +256,12 @@ export default function Transactions() {
                         style={{ background: `${tx.categoryColor}20`, color: tx.categoryColor ?? undefined }}
                       >
                         {tx.categoryName}
+                      </Badge>
+                    )}
+                    {tx.recurringId && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0 hidden sm:flex gap-0.5">
+                        <CalendarClock className="w-2.5 h-2.5" />
+                        Recorrente
                       </Badge>
                     )}
                   </div>

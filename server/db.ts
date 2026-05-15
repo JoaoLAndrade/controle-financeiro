@@ -3,10 +3,13 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   Category,
   InsertCategory,
+  InsertRecurringTransaction,
   InsertTransaction,
   InsertUser,
+  RecurringTransaction,
   Transaction,
   categories,
+  recurringTransactions,
   transactions,
   users,
 } from "../drizzle/schema";
@@ -115,9 +118,14 @@ export interface TransactionFilters {
   categoryId?: number;
 }
 
+export type TransactionWithCategory = Omit<Transaction, never> & {
+  categoryName: string | null;
+  categoryColor: string | null;
+};
+
 export async function getTransactions(
   filters: TransactionFilters
-): Promise<(Transaction & { categoryName: string | null; categoryColor: string | null })[]> {
+): Promise<TransactionWithCategory[]> {
   const db = await getDb();
   if (!db) return [];
 
@@ -138,6 +146,7 @@ export async function getTransactions(
       type: transactions.type,
       createdAt: transactions.createdAt,
       updatedAt: transactions.updatedAt,
+      recurringId: transactions.recurringId,
       categoryName: categories.name,
       categoryColor: categories.color,
     })
@@ -265,6 +274,141 @@ export async function getCategoryBreakdown(userId: number, year: number, month: 
     .orderBy(sql`SUM(${transactions.amount}) DESC`);
 
   return rows;
+}
+
+// ─── Recurring Transactions ──────────────────────────────────────────────────
+
+export async function getRecurringByUser(userId: number): Promise<
+  (RecurringTransaction & { categoryName: string | null; categoryColor: string | null })[]
+> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      id: recurringTransactions.id,
+      userId: recurringTransactions.userId,
+      name: recurringTransactions.name,
+      amount: recurringTransactions.amount,
+      type: recurringTransactions.type,
+      categoryId: recurringTransactions.categoryId,
+      dayOfMonth: recurringTransactions.dayOfMonth,
+      active: recurringTransactions.active,
+      lastGeneratedMonth: recurringTransactions.lastGeneratedMonth,
+      createdAt: recurringTransactions.createdAt,
+      updatedAt: recurringTransactions.updatedAt,
+      categoryName: categories.name,
+      categoryColor: categories.color,
+    })
+    .from(recurringTransactions)
+    .leftJoin(
+      categories,
+      and(
+        eq(recurringTransactions.categoryId, categories.id),
+        eq(categories.userId, userId)
+      )
+    )
+    .where(eq(recurringTransactions.userId, userId))
+    .orderBy(recurringTransactions.name);
+  return rows;
+}
+
+export async function createRecurring(
+  data: InsertRecurringTransaction
+): Promise<RecurringTransaction> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(recurringTransactions).values(data).$returningId();
+  const [rec] = await db
+    .select()
+    .from(recurringTransactions)
+    .where(eq(recurringTransactions.id, result.id))
+    .limit(1);
+  return rec;
+}
+
+export async function updateRecurring(
+  id: number,
+  userId: number,
+  data: Partial<
+    Pick<
+      InsertRecurringTransaction,
+      "name" | "amount" | "type" | "categoryId" | "dayOfMonth" | "active"
+    >
+  >
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(recurringTransactions)
+    .set(data)
+    .where(
+      and(eq(recurringTransactions.id, id), eq(recurringTransactions.userId, userId))
+    );
+}
+
+export async function deleteRecurring(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .delete(recurringTransactions)
+    .where(
+      and(eq(recurringTransactions.id, id), eq(recurringTransactions.userId, userId))
+    );
+}
+
+/**
+ * Generates transactions for all active recurring entries that haven't been
+ * generated for the given month yet. Returns the number of transactions created.
+ */
+export async function generateRecurringForMonth(
+  userId: number,
+  year: number,
+  month: number
+): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+
+  const pending = await db
+    .select()
+    .from(recurringTransactions)
+    .where(
+      and(
+        eq(recurringTransactions.userId, userId),
+        eq(recurringTransactions.active, "yes"),
+        sql`(${recurringTransactions.lastGeneratedMonth} IS NULL OR ${recurringTransactions.lastGeneratedMonth} < ${monthKey})`
+      )
+    );
+
+  if (pending.length === 0) return 0;
+
+  let created = 0;
+  for (const rec of pending) {
+    // Clamp day to last day of month (e.g. Feb 31 → Feb 28)
+    const maxDay = new Date(year, month, 0).getDate();
+    const day = Math.min(rec.dayOfMonth, maxDay);
+    const date = new Date(year, month - 1, day, 12, 0, 0);
+
+    await db.insert(transactions).values({
+      userId,
+      amount: rec.amount,
+      date,
+      description: rec.name,
+      categoryId: rec.categoryId,
+      type: rec.type,
+      recurringId: rec.id,
+    });
+
+    await db
+      .update(recurringTransactions)
+      .set({ lastGeneratedMonth: monthKey })
+      .where(eq(recurringTransactions.id, rec.id));
+
+    created++;
+  }
+
+  return created;
 }
 
 export async function getTotalBalance(userId: number) {

@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -5,16 +6,21 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   createCategory,
+  createRecurring,
   createTransaction,
   deleteCategory,
+  deleteRecurring,
   deleteTransaction,
+  generateRecurringForMonth,
   getCategoriesByUser,
   getCategoryBreakdown,
   getMonthlyEvolution,
   getMonthlySummary,
+  getRecurringByUser,
   getTotalBalance,
   getTransactions,
   updateCategory,
+  updateRecurring,
   updateTransaction,
 } from "./db";
 
@@ -133,6 +139,71 @@ const reportsRouter = router({
     ),
 });
 
+// ─── Recurring Router ───────────────────────────────────────────────
+
+const recurringRouter = router({
+  list: protectedProcedure.query(({ ctx }) => getRecurringByUser(ctx.user.id)),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(255),
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/),
+        type: z.enum(["income", "expense"]),
+        categoryId: z.number().nullable().optional(),
+        dayOfMonth: z.number().min(1).max(31).default(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Validate categoryId ownership
+      if (input.categoryId) {
+        const cats = await getCategoriesByUser(ctx.user.id);
+        if (!cats.find((c) => c.id === input.categoryId)) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
+        }
+      }
+      return createRecurring({
+        ...input,
+        userId: ctx.user.id,
+        categoryId: input.categoryId ?? null,
+      });
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().min(1).max(255).optional(),
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+        type: z.enum(["income", "expense"]).optional(),
+        categoryId: z.number().nullable().optional(),
+        dayOfMonth: z.number().min(1).max(31).optional(),
+        active: z.enum(["yes", "no"]).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Validate categoryId ownership
+      if (input.categoryId) {
+        const cats = await getCategoriesByUser(ctx.user.id);
+        if (!cats.find((c) => c.id === input.categoryId)) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
+        }
+      }
+      const { id, ...data } = input;
+      return updateRecurring(id, ctx.user.id, data);
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(({ ctx, input }) => deleteRecurring(input.id, ctx.user.id)),
+
+  generateForMonth: protectedProcedure
+    .input(z.object({ year: z.number(), month: z.number().min(1).max(12) }))
+    .mutation(({ ctx, input }) =>
+      generateRecurringForMonth(ctx.user.id, input.year, input.month)
+    ),
+});
+
 // ─── App Router ───────────────────────────────────────────────────────────────
 
 export const appRouter = router({
@@ -148,6 +219,7 @@ export const appRouter = router({
   categories: categoriesRouter,
   transactions: transactionsRouter,
   reports: reportsRouter,
+  recurring: recurringRouter,
 });
 
 export type AppRouter = typeof appRouter;

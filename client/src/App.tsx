@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Categories from "./pages/Categories";
 import Reports from "./pages/Reports";
+import Recurring from "./pages/Recurring";
 import Login from "./pages/Login";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/transacoes" component={() => <AppLayout><Transactions /></AppLayout>} />
       <Route path="/categorias" component={() => <AppLayout><Categories /></AppLayout>} />
       <Route path="/relatorios" component={() => <AppLayout><Reports /></AppLayout>} />
+      <Route path="/recorrencias" component={() => <AppLayout><Recurring /></AppLayout>} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

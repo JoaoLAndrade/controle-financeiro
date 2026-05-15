@@ -77,6 +77,7 @@ export default function Dashboard() {
   });
 
   const utils = trpc.useUtils();
+
   const onSuccess = () => {
     utils.reports.summary.invalidate();
     utils.reports.totalBalance.invalidate();

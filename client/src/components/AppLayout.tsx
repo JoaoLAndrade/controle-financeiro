@@ -3,6 +3,7 @@ import { getLoginUrl } from "@/const";
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
+  CalendarClock,
   ChevronRight,
   LayoutDashboard,
   LogOut,
@@ -12,7 +13,7 @@ import {
   X,
   ArrowLeftRight,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,6 +24,7 @@ import { toast } from "sonner";
 const navItems = [
   { href: "/", label: "Visão Geral", icon: LayoutDashboard },
   { href: "/transacoes", label: "Transações", icon: ArrowLeftRight },
+  { href: "/recorrencias", label: "Recorrências", icon: CalendarClock },
   { href: "/categorias", label: "Categorias", icon: Tag },
   { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
 ];
@@ -35,6 +37,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { user, loading, isAuthenticated } = useAuth();
   const [location, navigate] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const hasGeneratedRef = useRef(false);
+  const utils = trpc.useUtils();
+
+  // Auto-generate recurring transactions for current month once per session
+  const generateMutation = trpc.recurring.generateForMonth.useMutation({
+    onSuccess: (count) => {
+      if (count > 0) {
+        utils.reports.summary.invalidate();
+        utils.reports.totalBalance.invalidate();
+        utils.reports.monthlyEvolution.invalidate();
+        utils.transactions.list.invalidate();
+      }
+    },
+  });
+
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       navigate("/login");
@@ -45,6 +62,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       window.location.href = getLoginUrl();
+    }
+    if (!loading && isAuthenticated && !hasGeneratedRef.current) {
+      hasGeneratedRef.current = true;
+      const now = new Date();
+      generateMutation.mutate({ year: now.getFullYear(), month: now.getMonth() + 1 });
     }
   }, [loading, isAuthenticated]);
 

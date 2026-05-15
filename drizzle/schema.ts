@@ -45,9 +45,27 @@ export const transactions = mysqlTable("transactions", {
   description: varchar("description", { length: 255 }).notNull(),
   categoryId: int("categoryId"),
   type: mysqlEnum("type", ["income", "expense"]).notNull(),
+  recurringId: int("recurringId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = typeof transactions.$inferInsert;
+
+export const recurringTransactions = mysqlTable("recurring_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  type: mysqlEnum("type", ["income", "expense"]).notNull(),
+  categoryId: int("categoryId"),
+  dayOfMonth: int("dayOfMonth").notNull().default(1),
+  active: mysqlEnum("active", ["yes", "no"]).notNull().default("yes"),
+  lastGeneratedMonth: varchar("lastGeneratedMonth", { length: 7 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
+export type InsertRecurringTransaction = typeof recurringTransactions.$inferInsert;

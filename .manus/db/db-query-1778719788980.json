@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE `recurring_transactions` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `name` varchar(255) NOT NULL,\n  `amount` decimal(15,2) NOT NULL,\n  `type` enum('income','expense') NOT NULL,\n  `categoryId` int,\n  `dayOfMonth` int NOT NULL DEFAULT 1,\n  `active` enum('yes','no') NOT NULL DEFAULT 'yes',\n  `lastGeneratedMonth` varchar(7),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `recurring_transactions_id` PRIMARY KEY(`id`)\n);\n\nALTER TABLE `transactions` ADD `recurringId` int;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute \nCREATE TABLE `recurring_transactions` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `name` varchar(255) NOT NULL,\n  `amount` decimal(15,2) NOT NULL,\n  `type` enum('income','expense') NOT NULL,\n  `categoryId` int,\n  `dayOfMonth` int NOT NULL DEFAULT 1,\n  `active` enum('yes','no') NOT NULL DEFAULT 'yes',\n  `lastGeneratedMonth` varchar(7),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `recurring_transactions_id` PRIMARY KEY(`id`)\n);\n\nALTER TABLE `transactions` ADD `recurringId` int;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 556
+}
