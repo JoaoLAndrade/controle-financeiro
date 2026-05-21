@@ -199,8 +199,8 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-semibold text-foreground">
               Transações Recentes
             </CardTitle>
-            <Link href="/transacoes">
-              <a className="text-xs text-primary hover:underline font-medium">Ver todas</a>
+            <Link href="/transacoes" className="text-xs text-primary hover:underline font-medium">
+              Ver todas
             </Link>
           </CardHeader>
           <CardContent className="pt-0">

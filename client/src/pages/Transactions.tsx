@@ -282,7 +282,7 @@ export default function Transactions() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground"
+                      className="w-7 h-7 opacity-60 hover:opacity-100 transition-opacity text-muted-foreground"
                     >
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>

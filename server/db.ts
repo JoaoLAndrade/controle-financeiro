@@ -232,18 +232,31 @@ export async function getMonthlyEvolution(userId: number, months: number = 6) {
   startDate.setDate(1);
   startDate.setHours(0, 0, 0, 0);
 
+  // Fetch raw rows and aggregate by month in JS to avoid DATE_FORMAT issues in Drizzle GROUP BY
   const rows = await db
     .select({
       type: transactions.type,
-      month: sql<string>`DATE_FORMAT(${transactions.date}, '%Y-%m')`,
-      total: sql<string>`SUM(${transactions.amount})`,
+      date: transactions.date,
+      amount: transactions.amount,
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, userId), gte(transactions.date, startDate)))
-    .groupBy(sql`DATE_FORMAT(${transactions.date}, '%Y-%m')`, transactions.type)
-    .orderBy(sql`DATE_FORMAT(${transactions.date}, '%Y-%m')`);
+    .where(and(eq(transactions.userId, userId), gte(transactions.date, startDate)));
 
-  return rows;
+  const map = new Map<string, { type: string; month: string; total: number }>();
+  for (const row of rows) {
+    const d = new Date(row.date);
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const key = `${monthKey}-${row.type}`;
+    if (!map.has(key)) map.set(key, { type: row.type, month: monthKey, total: 0 });
+    map.get(key)!.total += parseFloat(row.amount);
+  }
+  return Array.from(map.values())
+    .map((r) => ({
+      type: r.type as "income" | "expense",
+      month: r.month,
+      total: r.total.toFixed(2),
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month));
 }
 
 export async function getCategoryBreakdown(userId: number, year: number, month: number) {
@@ -270,8 +283,7 @@ export async function getCategoryBreakdown(userId: number, year: number, month: 
         lte(transactions.date, endDate)
       )
     )
-    .groupBy(transactions.categoryId, categories.name, categories.color, transactions.type)
-    .orderBy(sql`SUM(${transactions.amount}) DESC`);
+    .groupBy(transactions.categoryId, categories.name, categories.color, transactions.type);
 
   return rows;
 }

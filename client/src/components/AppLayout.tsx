@@ -132,21 +132,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {navItems.map(({ href, label, icon: Icon }) => {
             const isActive = location === href;
             return (
-              <Link key={href} href={href}>
-                <a
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
-                    "transition-all duration-200",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  <span>{label}</span>
-                  {isActive && <ChevronRight className="w-3 h-3 ml-auto opacity-60" />}
-                </a>
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                  "transition-all duration-200",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                )}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span>{label}</span>
+                {isActive && <ChevronRight className="w-3 h-3 ml-auto opacity-60" />}
               </Link>
             );
           })}

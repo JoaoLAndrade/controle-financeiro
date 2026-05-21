@@ -31,11 +31,14 @@ class ErrorBoundary extends Component<Props, State> {
               className="text-destructive mb-6 flex-shrink-0"
             />
 
-            <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
+            <h2 className="text-xl font-semibold mb-2 text-foreground">Algo deu errado.</h2>
+            <p className="text-sm text-muted-foreground mb-4 text-center">
+              Ocorreu um erro inesperado na aplicação. Recarregue a página para tentar novamente.
+            </p>
 
-            <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-              <pre className="text-sm text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack}
+            <div className="p-4 w-full rounded-lg bg-muted overflow-auto mb-6 max-h-48">
+              <pre className="text-xs text-muted-foreground whitespace-break-spaces">
+                {this.state.error?.message}
               </pre>
             </div>
 
@@ -44,11 +47,11 @@ class ErrorBoundary extends Component<Props, State> {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg",
                 "bg-primary text-primary-foreground",
-                "hover:opacity-90 cursor-pointer"
+                "hover:opacity-90 cursor-pointer transition-opacity"
               )}
             >
               <RotateCcw size={16} />
-              Reload Page
+              Recarregar página
             </button>
           </div>
         </div>

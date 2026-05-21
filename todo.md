@@ -54,3 +54,10 @@
 - [x] Badge "Recorrente" nas transações geradas automaticamente
 - [x] Link para Recorrências no sidebar
 - [x] Testes vitest para o router de recorrências
+
+## Bugs e Otimizações — Pente Fino
+- [x] Corrigir query `getMonthlyEvolution`: `DATE_FORMAT` no `groupBy` via sql template causa erro 500
+- [x] Corrigir side effect `localStorage.setItem` dentro de `useMemo` em `useAuth.ts`
+- [x] Corrigir anti-pattern `<Link><a>` (nested anchors) em `AppLayout.tsx` e `Dashboard.tsx`
+- [x] Adicionar fallback de NaN em `formatCurrency` para strings inválidas
+- [x] Traduzir `ErrorBoundary` para português
