@@ -73,7 +73,7 @@ export default function Dashboard() {
   const { data: evolution, isLoading: evolutionLoading } = trpc.reports.monthlyEvolution.useQuery({ months: 6 });
   const { data: recentTxs, isLoading: txLoading } = trpc.transactions.list.useQuery({
     startDate: new Date(year, month - 1, 1),
-    endDate: new Date(year, month, 0),
+    endDate: new Date(year, month, 0, 23, 59, 59),
   });
 
   const utils = trpc.useUtils();
@@ -86,16 +86,23 @@ export default function Dashboard() {
   };
 
   const chartData = useMemo(() => {
-    if (!evolution) return [];
-    const map = new Map<string, { month: string; Receitas: number; Despesas: number }>();
-    for (const row of evolution) {
-      const key = row.month;
-      if (!map.has(key)) map.set(key, { month: formatShortMonth(key), Receitas: 0, Despesas: 0 });
-      const entry = map.get(key)!;
-      if (row.type === "income") entry.Receitas = parseFloat(row.total ?? "0");
-      else entry.Despesas = parseFloat(row.total ?? "0");
+    // Build a full 6-month skeleton so months without transactions still appear
+    const skeleton = new Map<string, { month: string; Receitas: number; Despesas: number }>();
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      skeleton.set(key, { month: formatShortMonth(key), Receitas: 0, Despesas: 0 });
     }
-    return Array.from(map.values());
+    if (evolution) {
+      for (const row of evolution) {
+        const entry = skeleton.get(row.month);
+        if (!entry) continue;
+        if (row.type === "income") entry.Receitas = parseFloat(row.total ?? "0");
+        else entry.Despesas = parseFloat(row.total ?? "0");
+      }
+    }
+    return Array.from(skeleton.values());
   }, [evolution]);
 
   const income = parseFloat(summary?.income ?? "0");

@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, name FROM categories WHERE userId = 1 ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute SELECT id, name FROM categories WHERE userId = 1 ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Alimentação"
+    },
+    {
+      "id": "30001",
+      "name": "Moradia"
+    },
+    {
+      "id": "30002",
+      "name": "Salário"
+    },
+    {
+      "id": "30003",
+      "name": "Freelance"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1\tAlimentação\n30001\tMoradia\n30002\tSalário\n30003\tFreelance\n",
+  "stderr": "",
+  "execution_time_ms": 260
+}

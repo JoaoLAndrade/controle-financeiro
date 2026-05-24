@@ -1,0 +1,9 @@
+{
+  "query": "-- Supermercado → Alimentação (id=1)\nUPDATE transactions SET categoryId = 1     WHERE id = 2     AND userId = 1;\n-- Aluguel (recorrente) → Moradia (id=30001)\nUPDATE transactions SET categoryId = 30001 WHERE id = 60001 AND userId = 1;\n-- Salário maio (manual) → Salário (id=30002)\nUPDATE transactions SET categoryId = 30002 WHERE id = 1     AND userId = 1;\n-- Salário (recorrente) → Salário (id=30002)\nUPDATE transactions SET categoryId = 30002 WHERE id = 60002 AND userId = 1;\n-- Freelance desenvolvimento → Freelance (id=30003)\nUPDATE transactions SET categoryId = 30003 WHERE id = 30001 AND userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute -- Supermercado → Alimentação (id=1)\nUPDATE transactions SET categoryId = 1     WHERE id = 2     AND userId = 1;\n-- Aluguel (recorrente) → Moradia (id=30001)\nUPDATE transactions SET categoryId = 30001 WHERE id = 60001 AND userId = 1;\n-- Salário maio (manual) → Salário (id=30002)\nUPDATE transactions SET categoryId = 30002 WHERE id = 1     AND userId = 1;\n-- Salário (recorrente) → Salário (id=30002)\nUPDATE transactions SET categoryId = 30002 WHERE id = 60002 AND userId = 1;\n-- Freelance desenvolvimento → Freelance (id=30003)\nUPDATE transactions SET categoryId = 30003 WHERE id = 30001 AND userId = 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 298
+}

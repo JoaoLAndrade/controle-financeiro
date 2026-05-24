@@ -97,23 +97,25 @@ export default function Reports() {
       .filter((r) => r.value > 0);
   }, [breakdown]);
 
-  // Bar chart data for evolution
+  // Bar chart data for evolution — always show 12 months even without transactions
   const barData = useMemo(() => {
-    if (!evolution) return [];
-    const map = new Map<string, { month: string; Receitas: number; Despesas: number }>();
-    for (const row of evolution) {
-      const key = row.month;
-      if (!map.has(key)) {
-        const [y, m] = key.split("-").map(Number);
-        const d = new Date(y, m - 1, 1);
-        const label = new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(d);
-        map.set(key, { month: label, Receitas: 0, Despesas: 0 });
-      }
-      const entry = map.get(key)!;
-      if (row.type === "income") entry.Receitas = parseFloat(row.total ?? "0");
-      else entry.Despesas = parseFloat(row.total ?? "0");
+    const skeleton = new Map<string, { month: string; Receitas: number; Despesas: number }>();
+    const today = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(d);
+      skeleton.set(key, { month: label, Receitas: 0, Despesas: 0 });
     }
-    return Array.from(map.values());
+    if (evolution) {
+      for (const row of evolution) {
+        const entry = skeleton.get(row.month);
+        if (!entry) continue;
+        if (row.type === "income") entry.Receitas = parseFloat(row.total ?? "0");
+        else entry.Despesas = parseFloat(row.total ?? "0");
+      }
+    }
+    return Array.from(skeleton.values());
   }, [evolution]);
 
   const years = Array.from({ length: 5 }, (_, i) => now.year - i);

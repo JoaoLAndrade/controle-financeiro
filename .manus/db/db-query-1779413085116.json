@@ -1,0 +1,48 @@
+{
+  "query": "SELECT id, description, amount, type, categoryId FROM transactions WHERE userId = 1 ORDER BY date DESC LIMIT 20;\nSELECT id, name, color, icon FROM categories WHERE userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute SELECT id, description, amount, type, categoryId FROM transactions WHERE userId = 1 ORDER BY date DESC LIMIT 20;\nSELECT id, name, color, icon FROM categories WHERE userId = 1;",
+  "rows": [
+    {
+      "id": "30001",
+      "description": "Freelance desenvolvimento",
+      "amount": "3000.00",
+      "type": "income",
+      "categoryId": "NULL"
+    },
+    {
+      "id": "2",
+      "description": "Supermercado",
+      "amount": "320.50",
+      "type": "expense",
+      "categoryId": "NULL"
+    },
+    {
+      "id": "1",
+      "description": "Salário maio",
+      "amount": "1500.00",
+      "type": "income",
+      "categoryId": "NULL"
+    },
+    {
+      "id": "60002",
+      "description": "Salário",
+      "amount": "5000.00",
+      "type": "income",
+      "categoryId": "NULL"
+    },
+    {
+      "id": "60001",
+      "description": "Aluguel",
+      "amount": "1800.00",
+      "type": "expense",
+      "categoryId": "NULL"
+    }
+  ],
+  "messages": [
+    "id\tname\tcolor\ticon",
+    "1\tAlimentação\t#6366f1\tutensils"
+  ],
+  "stdout": "id\tdescription\tamount\ttype\tcategoryId\n30001\tFreelance desenvolvimento\t3000.00\tincome\tNULL\n2\tSupermercado\t320.50\texpense\tNULL\n1\tSalário maio\t1500.00\tincome\tNULL\n60002\tSalário\t5000.00\tincome\tNULL\n60001\tAluguel\t1800.00\texpense\tNULL\nid\tname\tcolor\ticon\n1\tAlimentação\t#6366f1\tutensils\n",
+  "stderr": "",
+  "execution_time_ms": 352
+}

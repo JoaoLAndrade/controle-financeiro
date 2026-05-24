@@ -47,6 +47,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         utils.reports.summary.invalidate();
         utils.reports.totalBalance.invalidate();
         utils.reports.monthlyEvolution.invalidate();
+        utils.reports.categoryBreakdown.invalidate();
         utils.transactions.list.invalidate();
       }
     },

@@ -1,0 +1,45 @@
+{
+  "query": "SELECT t.id, t.description, t.type, t.amount, c.name AS categoria\nFROM transactions t\nLEFT JOIN categories c ON t.categoryId = c.id\nWHERE t.userId = 1\nORDER BY t.date DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute SELECT t.id, t.description, t.type, t.amount, c.name AS categoria\nFROM transactions t\nLEFT JOIN categories c ON t.categoryId = c.id\nWHERE t.userId = 1\nORDER BY t.date DESC;",
+  "rows": [
+    {
+      "id": "30001",
+      "description": "Freelance desenvolvimento",
+      "type": "income",
+      "amount": "3000.00",
+      "categoria": "Freelance"
+    },
+    {
+      "id": "2",
+      "description": "Supermercado",
+      "type": "expense",
+      "amount": "320.50",
+      "categoria": "Alimentação"
+    },
+    {
+      "id": "1",
+      "description": "Salário maio",
+      "type": "income",
+      "amount": "1500.00",
+      "categoria": "Salário"
+    },
+    {
+      "id": "60001",
+      "description": "Aluguel",
+      "type": "expense",
+      "amount": "1800.00",
+      "categoria": "Moradia"
+    },
+    {
+      "id": "60002",
+      "description": "Salário",
+      "type": "income",
+      "amount": "5000.00",
+      "categoria": "Salário"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\ttype\tamount\tcategoria\n30001\tFreelance desenvolvimento\tincome\t3000.00\tFreelance\n2\tSupermercado\texpense\t320.50\tAlimentação\n1\tSalário maio\tincome\t1500.00\tSalário\n60001\tAluguel\texpense\t1800.00\tMoradia\n60002\tSalário\tincome\t5000.00\tSalário\n",
+  "stderr": "",
+  "execution_time_ms": 263
+}

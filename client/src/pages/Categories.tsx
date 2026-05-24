@@ -108,11 +108,6 @@ export default function Categories() {
 
   const selectedColor = form.watch("color");
 
-  const grouped = {
-    income: categories?.filter((c) => c.type === "income" || c.type === "both") ?? [],
-    expense: categories?.filter((c) => c.type === "expense" || c.type === "both") ?? [],
-  };
-
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-5xl">
       {/* Header */}
@@ -181,7 +176,7 @@ export default function Categories() {
                     {TYPE_LABELS[cat.type]}
                   </Badge>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity sm:opacity-0 opacity-100">
                   <Button
                     variant="ghost"
                     size="icon"

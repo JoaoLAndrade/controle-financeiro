@@ -1,0 +1,8 @@
+{
+  "query": "\n-- Índice único que impede duas transações do mesmo recurringId no mesmo mês\n-- Usa DAY_OF_MONTH para garantir que a constraint seja por mês calendário\nALTER TABLE transactions\n  ADD COLUMN recurringMonth VARCHAR(7) GENERATED ALWAYS AS (\n    CASE WHEN recurringId IS NOT NULL\n      THEN DATE_FORMAT(date, '%Y-%m')\n      ELSE NULL\n    END\n  ) STORED;\n\nCREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_recurring_month\n  ON transactions (recurringId, recurringMonth);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute \n-- Índice único que impede duas transações do mesmo recurringId no mesmo mês\n-- Usa DAY_OF_MONTH para garantir que a constraint seja por mês calendário\nALTER TABLE transactions\n  ADD COLUMN recurringMonth VARCHAR(7) GENERATED ALWAYS AS (\n    CASE WHEN recurringId IS NOT NULL\n      THEN DATE_FORMAT(date, '%Y-%m')\n      ELSE NULL\n    END\n  ) STORED;\n\nCREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_recurring_month\n  ON transactions (recurringId, recurringMonth);\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 3106 (HY000) at line 4: 'Adding generated stored column through ALTER TABLE' is not supported for generated columns."
+  ]
+}

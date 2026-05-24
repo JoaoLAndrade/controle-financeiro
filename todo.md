@@ -61,3 +61,15 @@
 - [x] Corrigir anti-pattern `<Link><a>` (nested anchors) em `AppLayout.tsx` e `Dashboard.tsx`
 - [x] Adicionar fallback de NaN em `formatCurrency` para strings inválidas
 - [x] Traduzir `ErrorBoundary` para português
+
+## Correções Pente Fino — Rodada 2 (10 itens)
+- [x] #1 Geração duplicada de recorrências — envolver INSERT+UPDATE em transação atômica (db.ts)
+- [x] #2 Gráficos omitem meses sem movimentação — preencher meses zerados (Dashboard.tsx, Reports.tsx)
+- [x] #3 endDate no Dashboard não cobre o dia inteiro — usar 23:59:59 (Dashboard.tsx)
+- [x] #4 categoryBreakdown não invalidado após geração automática (AppLayout.tsx)
+- [x] #5 Página 404 em inglês — traduzir para português (NotFound.tsx)
+- [x] #6 Botões de ação em Categorias invisíveis em touch/mobile (Categories.tsx)
+- [x] #7 Ícone errado no card de Impacto Mensal — ArrowDownRight quando negativo (Recurring.tsx)
+- [x] #8 Código morto `grouped` em Categories.tsx
+- [x] #9 Ausência de índices no banco — adicionar índices compostos via SQL
+- [x] #10 Sem validação de ownership do categoryId em transactions.create/update (routers.ts)

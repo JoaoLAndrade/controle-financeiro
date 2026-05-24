@@ -88,13 +88,19 @@ const transactionsRouter = router({
         type: z.enum(["income", "expense"]),
       })
     )
-    .mutation(({ ctx, input }) =>
-      createTransaction({
+    .mutation(async ({ ctx, input }) => {
+      if (input.categoryId) {
+        const cats = await getCategoriesByUser(ctx.user.id);
+        if (!cats.find((c) => c.id === input.categoryId)) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
+        }
+      }
+      return createTransaction({
         ...input,
         userId: ctx.user.id,
         categoryId: input.categoryId ?? null,
-      })
-    ),
+      });
+    }),
 
   update: protectedProcedure
     .input(
@@ -107,7 +113,13 @@ const transactionsRouter = router({
         type: z.enum(["income", "expense"]).optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
+      if (input.categoryId) {
+        const cats = await getCategoriesByUser(ctx.user.id);
+        if (!cats.find((c) => c.id === input.categoryId)) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
+        }
+      }
       const { id, ...data } = input;
       return updateTransaction(id, ctx.user.id, data);
     }),

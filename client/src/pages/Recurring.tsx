@@ -195,7 +195,9 @@ export default function Recurring() {
           <Card className="card-shadow border-border/60">
             <CardContent className="p-4 flex items-center gap-3">
               <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", totalMonthly >= 0 ? "bg-income-soft" : "bg-expense-soft")}>
-                <ArrowUpRight className={cn("w-4 h-4", totalMonthly >= 0 ? "text-income" : "text-expense")} />
+                {totalMonthly >= 0
+                  ? <ArrowUpRight className="w-4 h-4 text-income" />
+                  : <ArrowDownRight className="w-4 h-4 text-expense" />}
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Impacto mensal</p>
