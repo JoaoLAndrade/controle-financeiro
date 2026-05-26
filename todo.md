@@ -73,3 +73,9 @@
 - [x] #8 Código morto `grouped` em Categories.tsx
 - [x] #9 Ausência de índices no banco — adicionar índices compostos via SQL
 - [x] #10 Sem validação de ownership do categoryId em transactions.create/update (routers.ts)
+
+## Tema Dark
+- [x] Definir variáveis CSS para o tema dark em index.css
+- [x] Habilitar ThemeProvider como switchable em App.tsx
+- [x] Adicionar toggle de tema no sidebar (AppLayout.tsx)
+- [x] Verificar contraste e legibilidade em todas as páginas no tema dark

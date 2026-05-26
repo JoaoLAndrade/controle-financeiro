@@ -8,7 +8,9 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Moon,
   PiggyBank,
+  Sun,
   Tag,
   X,
   ArrowLeftRight,
@@ -20,6 +22,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
   { href: "/", label: "Visão Geral", icon: LayoutDashboard },
@@ -35,6 +38,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { user, loading, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [location, navigate] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const hasGeneratedRef = useRef(false);
@@ -153,6 +157,36 @@ export default function AppLayout({ children }: AppLayoutProps) {
           })}
         </nav>
 
+        {/* Theme toggle */}
+        <div className="px-3 pb-2">
+          <button
+            onClick={toggleTheme}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+              "text-muted-foreground hover:text-foreground hover:bg-accent",
+              "transition-all duration-200"
+            )}
+            title={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+          >
+            {theme === "dark" ? (
+              <Sun className="w-4 h-4 flex-shrink-0" />
+            ) : (
+              <Moon className="w-4 h-4 flex-shrink-0" />
+            )}
+            <span>{theme === "dark" ? "Tema Claro" : "Tema Escuro"}</span>
+            {/* Toggle pill */}
+            <div className={cn(
+              "ml-auto w-9 h-5 rounded-full transition-colors duration-300 flex items-center px-0.5",
+              theme === "dark" ? "bg-primary" : "bg-muted"
+            )}>
+              <div className={cn(
+                "w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300",
+                theme === "dark" ? "translate-x-4" : "translate-x-0"
+              )} />
+            </div>
+          </button>
+        </div>
+
         {/* User profile */}
         <div className="p-3 border-t border-border">
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg">
@@ -192,10 +226,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <PiggyBank className="w-5 h-5 text-primary" />
             <span className="font-display font-semibold text-sm">Finanças Pessoal</span>
           </div>
+          <button
+            onClick={toggleTheme}
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-accent"
+            title={theme === "dark" ? "Tema claro" : "Tema escuro"}
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </header>
 
         {/* Page content */}
