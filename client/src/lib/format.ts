@@ -1,21 +1,18 @@
 export function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return "R$\u00a00,00";
+  if (value === null || value === undefined) return "$0.00";
   let num: number;
   if (typeof value === "string") {
     // If string contains a comma, treat as pt-BR format: "1.500,50" → 1500.50
     // If string uses only dot as decimal (DB format): "1500.50" → 1500.50
-    const hasBrFormat = value.includes(",");
-    const normalized = hasBrFormat
-      ? value.replace(/\./g, "").replace(",", ".")
-      : value;
-    num = parseFloat(normalized);
+    // DB stores values with dot as decimal separator (e.g. "1500.50")
+    num = parseFloat(value.replace(/,/g, ""));
   } else {
     num = value;
   }
-  if (isNaN(num)) return "R$\u00a00,00";
-  return new Intl.NumberFormat("pt-BR", {
+  if (isNaN(num)) return "$0.00";
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "BRL",
+    currency: "USD",
     minimumFractionDigits: 2,
   }).format(num);
 }

@@ -70,7 +70,7 @@ export default function TransactionModal({
       if (transaction) {
         form.reset({
           type: transaction.type,
-          amount: parseFloat(transaction.amount).toFixed(2).replace(".", ","),
+          amount: parseFloat(transaction.amount).toFixed(2),
           date: new Date(transaction.date),
           description: transaction.description,
           categoryId: transaction.categoryId?.toString() ?? undefined,
@@ -108,7 +108,8 @@ export default function TransactionModal({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit = (values: FormValues) => {
-    const amount = values.amount.replace(",", ".");
+    // Amount is already in US format (dot as decimal separator)
+    const amount = values.amount.replace(/,/g, "");
     const categoryId = values.categoryId ? parseInt(values.categoryId) : null;
 
     if (isEdit && transaction) {
@@ -179,14 +180,14 @@ export default function TransactionModal({
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor (R$)</FormLabel>
+                  <FormLabel>Valor ($)</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">R$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">$</span>
                       <Input
                         {...field}
-                        placeholder="0,00"
-                        className="pl-9"
+                        placeholder="0.00"
+                        className="pl-7"
                         inputMode="decimal"
                       />
                     </div>
