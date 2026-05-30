@@ -117,7 +117,8 @@ export default function Recurring() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit = (values: FormValues) => {
-    const amount = values.amount.replace(/,/g, "");
+    // Normalize decimal separator: replace comma with dot (e.g. "1,50" → "1.50")
+    const amount = values.amount.replace(",", ".");
     const categoryId = values.categoryId ? parseInt(values.categoryId) : null;
     if (editingRec) {
       updateMutation.mutate({ id: editingRec.id, name: values.name, amount, type: values.type, categoryId, dayOfMonth: values.dayOfMonth });

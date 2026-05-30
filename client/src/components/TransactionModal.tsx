@@ -108,8 +108,8 @@ export default function TransactionModal({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit = (values: FormValues) => {
-    // Amount is already in US format (dot as decimal separator)
-    const amount = values.amount.replace(/,/g, "");
+    // Normalize decimal separator: replace comma with dot (e.g. "1,50" → "1.50")
+    const amount = values.amount.replace(",", ".");
     const categoryId = values.categoryId ? parseInt(values.categoryId) : null;
 
     if (isEdit && transaction) {

@@ -412,9 +412,11 @@ export async function generateRecurringForMonth(
     await db.transaction(async (tx) => {
       // SELECT FOR UPDATE locks this row for the duration of the transaction,
       // serialising concurrent requests so only one can proceed past this point.
-      const [current] = await tx.execute(
+      // tx.execute() returns [rows, fields] — destructure rows first, then get the first row.
+      const [rows] = await tx.execute(
         sql`SELECT lastGeneratedMonth FROM recurring_transactions WHERE id = ${rec.id} FOR UPDATE`
-      ) as unknown as [{ lastGeneratedMonth: string | null }];
+      ) as unknown as [{ lastGeneratedMonth: string | null }[]];
+      const current = rows[0];
 
       if (
         current &&
@@ -648,12 +650,21 @@ export async function getDashboardPrefs(
 
   if (!row) return { widgetOrder: [...DEFAULT_WIDGET_ORDER], hiddenWidgets: [] };
 
-  const widgetOrder: WidgetId[] = JSON.parse(row.widgetOrder || "[]").filter(
-    (w: string) => DEFAULT_WIDGET_ORDER.includes(w as WidgetId)
-  );
-  const hiddenWidgets: WidgetId[] = JSON.parse(row.hiddenWidgets || "[]").filter(
-    (w: string) => DEFAULT_WIDGET_ORDER.includes(w as WidgetId)
-  );
+  // Safely parse JSON — fall back to defaults if the stored value is corrupted
+  const safeParse = (json: string | null, fallback: WidgetId[]): WidgetId[] => {
+    try {
+      const parsed = JSON.parse(json || "[]");
+      if (!Array.isArray(parsed)) return fallback;
+      return parsed.filter((w: unknown) =>
+        typeof w === "string" && DEFAULT_WIDGET_ORDER.includes(w as WidgetId)
+      ) as WidgetId[];
+    } catch {
+      return fallback;
+    }
+  };
+
+  const widgetOrder = safeParse(row.widgetOrder, [...DEFAULT_WIDGET_ORDER]);
+  const hiddenWidgets = safeParse(row.hiddenWidgets, []);
 
   // Ensure all default widgets are present in order (handle new widgets added later)
   const merged = [

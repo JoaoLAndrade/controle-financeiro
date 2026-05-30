@@ -120,3 +120,9 @@
 - [x] Botões "Salvar Layout" e "Cancelar" no modo de edição
 - [x] Preferências persistidas no banco por usuário (upsert por userId)
 - [x] Testes vitest: 8 testes para dashboard router — 42 testes no total
+
+## Correção de Bugs Críticos (Revisão)
+- [x] Bug 1: TransactionModal — `.replace(",", ".")` normaliza vírgula decimal corretamente
+- [x] Bug 2: Recurring — mesmo fix de normalização de vírgula decimal
+- [x] Bug 3: getDashboardPrefs — JSON.parse envolvido em try/catch com fallback para defaults
+- [x] Bug 4: generateRecurringForMonth — cast corrigido: `const [rows] = ...; const current = rows[0]`
