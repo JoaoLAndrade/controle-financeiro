@@ -254,75 +254,161 @@ export default function Dashboard() {
       </div>
 
       {/* Goals widget */}
-      {(goalsLoading || goalsData.length > 0) && (
-        <Card className="card-shadow border-border/60">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Target className="w-4 h-4 text-muted-foreground" />
-              Metas do Mês
-            </CardTitle>
-            <Link href="/metas" className="text-xs text-primary hover:underline font-medium">
-              Ver todas
-            </Link>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {goalsLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+      <Card className="card-shadow border-border/60">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Target className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-sm font-semibold text-foreground">Metas do Mês</CardTitle>
+              <p className="text-xs text-muted-foreground">{formatMonthYear(year, month)}</p>
+            </div>
+          </div>
+          <Link href="/metas" className="text-xs text-primary hover:underline font-medium">
+            Gerenciar
+          </Link>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {goalsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+            </div>
+          ) : goalsData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center">
+                <Target className="w-5 h-5 text-muted-foreground/40" />
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {goalsData.slice(0, 4).map((goal) => {
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Nenhuma meta este mês</p>
+                <p className="text-xs text-muted-foreground/60 mt-0.5">Defina limites mensais para controlar seus gastos</p>
+              </div>
+              <Link href="/metas">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
+                  <Target className="w-3.5 h-3.5" />
+                  Criar metas
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Summary bar */}
+              <div className="flex items-center gap-4 mb-4 px-1">
+                {[
+                  { label: "No caminho", count: goalsData.filter(g => g.percentage < 80).length, color: "text-emerald-500", dot: "bg-emerald-500" },
+                  { label: "Atenção", count: goalsData.filter(g => g.percentage >= 80 && g.percentage < 100).length, color: "text-amber-500", dot: "bg-amber-500" },
+                  { label: "Atingido", count: goalsData.filter(g => g.percentage >= 100).length, color: "text-red-500", dot: "bg-red-500" },
+                ].map(({ label, count, color, dot }) => (
+                  <div key={label} className="flex items-center gap-1.5">
+                    <div className={cn("w-2 h-2 rounded-full", dot)} />
+                    <span className="text-xs text-muted-foreground">{label}</span>
+                    <span className={cn("text-xs font-bold", color)}>{count}</span>
+                  </div>
+                ))}
+                <div className="ml-auto text-xs text-muted-foreground">
+                  {goalsData.length} meta{goalsData.length !== 1 ? "s" : ""}
+                </div>
+              </div>
+
+              {/* Goal rows */}
+              <div className="space-y-2.5">
+                {goalsData.slice(0, 6).map((goal) => {
                   const pct = Math.min(goal.percentage, 100);
-                  const isAlert = goal.percentage >= 80;
                   const isExceeded = goal.percentage >= 100;
+                  const isAlert = goal.percentage >= 80 && !isExceeded;
+                  const isOk = goal.percentage < 80;
+                  const catColor = goal.categoryColor ?? "#6366f1";
+                  const remaining = parseFloat(goal.targetAmount) - parseFloat(goal.spent);
+
                   return (
                     <div
                       key={goal.id}
                       className={cn(
-                        "rounded-xl p-4 border transition-colors",
+                        "rounded-xl p-3.5 border transition-all duration-200",
                         isExceeded
-                          ? "border-red-500/30 bg-red-500/5"
+                          ? "border-red-500/25 bg-red-500/5"
                           : isAlert
-                          ? "border-amber-500/30 bg-amber-500/5"
-                          : "border-border/60 bg-card"
+                          ? "border-amber-500/25 bg-amber-500/5"
+                          : "border-border/50 bg-muted/20 hover:bg-muted/40"
                       )}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm font-medium text-foreground truncate">{goal.name}</p>
-                        {isExceeded ? (
-                          <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
-                        ) : isAlert ? (
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        )}
+                      {/* Top row: name + badge */}
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: catColor }}
+                          />
+                          <p className="text-sm font-semibold text-foreground truncate">{goal.name}</p>
+                          {goal.categoryName && (
+                            <span className="text-xs text-muted-foreground hidden sm:inline truncate">
+                              · {goal.categoryName}
+                            </span>
+                          )}
+                        </div>
+                        <div className={cn(
+                          "flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0",
+                          isExceeded
+                            ? "bg-red-500/15 text-red-500"
+                            : isAlert
+                            ? "bg-amber-500/15 text-amber-500"
+                            : "bg-emerald-500/15 text-emerald-500"
+                        )}>
+                          {isExceeded ? (
+                            <AlertTriangle className="w-3 h-3" />
+                          ) : isAlert ? (
+                            <AlertTriangle className="w-3 h-3" />
+                          ) : (
+                            <CheckCircle2 className="w-3 h-3" />
+                          )}
+                          {goal.percentage}%
+                        </div>
                       </div>
-                      <div className="relative h-1.5 w-full rounded-full bg-muted overflow-hidden mb-2">
+
+                      {/* Progress bar */}
+                      <div className="relative h-2 w-full rounded-full bg-muted/60 overflow-hidden mb-2">
                         <div
                           className={cn(
-                            "h-full rounded-full transition-all duration-500",
+                            "h-full rounded-full transition-all duration-700",
                             isExceeded ? "bg-red-500" : isAlert ? "bg-amber-500" : "bg-emerald-500"
                           )}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{formatCurrency(parseFloat(goal.spent))}</span>
+
+                      {/* Bottom row: spent / limit / remaining */}
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">
+                          Gasto: <span className="font-medium text-foreground">{formatCurrency(parseFloat(goal.spent))}</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          Limite: <span className="font-medium text-foreground">{formatCurrency(parseFloat(goal.targetAmount))}</span>
+                        </span>
                         <span className={cn(
-                          "font-semibold",
-                          isExceeded ? "text-red-500" : isAlert ? "text-amber-500" : "text-emerald-500"
-                        )}>{goal.percentage}%</span>
-                        <span>{formatCurrency(parseFloat(goal.targetAmount))}</span>
+                          "font-medium",
+                          isExceeded ? "text-red-500" : isAlert ? "text-amber-500" : "text-muted-foreground"
+                        )}>
+                          {isExceeded
+                            ? `+${formatCurrency(Math.abs(remaining))} acima`
+                            : `${formatCurrency(remaining)} restante`}
+                        </span>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
+              {goalsData.length > 6 && (
+                <div className="mt-3 text-center">
+                  <Link href="/metas" className="text-xs text-primary hover:underline">
+                    Ver mais {goalsData.length - 6} meta{goalsData.length - 6 !== 1 ? "s" : ""}
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <TransactionModal open={modalOpen} onOpenChange={setModalOpen} onSuccess={onSuccess} />
     </div>
