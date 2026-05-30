@@ -108,3 +108,15 @@
 - [x] Botão "Copiar metas de [mês anterior]" também no empty state
 - [x] Toast de confirmação com número de metas copiadas (ou aviso se não houver metas no mês anterior)
 - [x] Testes vitest: 3 novos testes (copia, validação de formato, acesso não autenticado) — 34 testes no total
+
+## Dashboard Editável
+- [x] Tabela `dashboard_prefs` no schema (id, userId, widgetOrder JSON, hiddenWidgets JSON)
+- [x] Migração SQL aplicada
+- [x] Helpers `getDashboardPrefs` e `saveDashboardPrefs` no db.ts
+- [x] Router tRPC `dashboard.getPrefs` e `dashboard.savePrefs`
+- [x] Modo de edição no Dashboard: botão "Editar Dashboard" no header
+- [x] Drag-and-drop para reordenar widgets (usando @dnd-kit)
+- [x] Toggle para mostrar/ocultar cada widget (botão Visível/Oculto)
+- [x] Botões "Salvar Layout" e "Cancelar" no modo de edição
+- [x] Preferências persistidas no banco por usuário (upsert por userId)
+- [x] Testes vitest: 8 testes para dashboard router — 42 testes no total

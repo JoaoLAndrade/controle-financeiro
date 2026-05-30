@@ -2,6 +2,7 @@ import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   Category,
+  DashboardPrefs,
   Goal,
   InsertCategory,
   InsertGoal,
@@ -11,6 +12,7 @@ import {
   RecurringTransaction,
   Transaction,
   categories,
+  dashboardPrefs,
   goals,
   recurringTransactions,
   transactions,
@@ -619,6 +621,66 @@ export async function copyGoalsFromPreviousMonth(
   );
 
   return sourceGoals.length;
+}
+
+// ─── Dashboard Preferences ───────────────────────────────────────────────────
+
+export const DEFAULT_WIDGET_ORDER = [
+  "summary",
+  "chart",
+  "recent",
+  "goals",
+] as const;
+
+export type WidgetId = (typeof DEFAULT_WIDGET_ORDER)[number];
+
+export async function getDashboardPrefs(
+  userId: number
+): Promise<{ widgetOrder: WidgetId[]; hiddenWidgets: WidgetId[] }> {
+  const db = await getDb();
+  if (!db) return { widgetOrder: [...DEFAULT_WIDGET_ORDER], hiddenWidgets: [] };
+
+  const [row] = await db
+    .select()
+    .from(dashboardPrefs)
+    .where(eq(dashboardPrefs.userId, userId))
+    .limit(1);
+
+  if (!row) return { widgetOrder: [...DEFAULT_WIDGET_ORDER], hiddenWidgets: [] };
+
+  const widgetOrder: WidgetId[] = JSON.parse(row.widgetOrder || "[]").filter(
+    (w: string) => DEFAULT_WIDGET_ORDER.includes(w as WidgetId)
+  );
+  const hiddenWidgets: WidgetId[] = JSON.parse(row.hiddenWidgets || "[]").filter(
+    (w: string) => DEFAULT_WIDGET_ORDER.includes(w as WidgetId)
+  );
+
+  // Ensure all default widgets are present in order (handle new widgets added later)
+  const merged = [
+    ...widgetOrder.filter((w) => DEFAULT_WIDGET_ORDER.includes(w as WidgetId)),
+    ...DEFAULT_WIDGET_ORDER.filter((w) => !widgetOrder.includes(w)),
+  ] as WidgetId[];
+
+  return { widgetOrder: merged, hiddenWidgets };
+}
+
+export async function saveDashboardPrefs(
+  userId: number,
+  widgetOrder: WidgetId[],
+  hiddenWidgets: WidgetId[]
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const orderJson = JSON.stringify(widgetOrder);
+  const hiddenJson = JSON.stringify(hiddenWidgets);
+
+  await db
+    .insert(dashboardPrefs)
+    .values({ userId, widgetOrder: orderJson, hiddenWidgets: hiddenJson })
+    .onDuplicateKeyUpdate({
+      set: { widgetOrder: orderJson, hiddenWidgets: hiddenJson },
+    });
 }
 
 export async function getTotalBalance(userId: number) {

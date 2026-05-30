@@ -84,3 +84,15 @@ export const goals = mysqlTable("goals", {
 
 export type Goal = typeof goals.$inferSelect;
 export type InsertGoal = typeof goals.$inferInsert;
+
+export const dashboardPrefs = mysqlTable("dashboard_prefs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  widgetOrder: text("widgetOrder").notNull(), // JSON array of widget ids
+  hiddenWidgets: text("hiddenWidgets").notNull(), // JSON array of hidden widget ids
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DashboardPrefs = typeof dashboardPrefs.$inferSelect;
+export type InsertDashboardPrefs = typeof dashboardPrefs.$inferInsert;

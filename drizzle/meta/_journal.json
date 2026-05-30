@@ -36,6 +36,13 @@
       "when": 1780107553668,
       "tag": "0004_robust_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1780147864430,
+      "tag": "0005_ancient_ricochet",
+      "breakpoints": true
     }
   ]
 }

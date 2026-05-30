@@ -1,0 +1,14 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `dashboard_prefs` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `widgetOrder` text NOT NULL DEFAULT ('[]'),\n  `hiddenWidgets` text NOT NULL DEFAULT ('[]'),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `dashboard_prefs_id` PRIMARY KEY(`id`),\n  CONSTRAINT `dashboard_prefs_userId_unique` UNIQUE(`userId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute CREATE TABLE IF NOT EXISTS `dashboard_prefs` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `widgetOrder` text NOT NULL DEFAULT ('[]'),\n  `hiddenWidgets` text NOT NULL DEFAULT ('[]'),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `dashboard_prefs_id` PRIMARY KEY(`id`),\n  CONSTRAINT `dashboard_prefs_userId_unique` UNIQUE(`userId`)\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 4 column 44 near \"'[]'),",
+    "  `hiddenWidgets` text NOT NULL DEFAULT ('[]'),",
+    "  `createdAt` timestamp NOT NULL DEFAULT (now()),",
+    "  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,",
+    "  CONSTRAINT `dashboard_prefs_id` PRIMARY KEY(`id`),",
+    "  CONSTRAINT `dashboard_prefs_userId_unique` UNIQUE(`userId`)",
+    ")\""
+  ]
+}

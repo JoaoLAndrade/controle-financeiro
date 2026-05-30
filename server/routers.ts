@@ -5,8 +5,8 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
-  createCategory,
   copyGoalsFromPreviousMonth,
+  createCategory,
   createGoal,
   createRecurring,
   createTransaction,
@@ -17,16 +17,19 @@ import {
   generateRecurringForMonth,
   getCategoriesByUser,
   getCategoryBreakdown,
+  getDashboardPrefs,
   getGoalsWithProgress,
   getMonthlyEvolution,
   getMonthlySummary,
   getRecurringByUser,
   getTotalBalance,
   getTransactions,
+  saveDashboardPrefs,
   updateCategory,
   updateGoal,
   updateRecurring,
   updateTransaction,
+  type WidgetId,
 } from "./db";
 
 // ─── Categories Router ────────────────────────────────────────────────────────
@@ -287,8 +290,32 @@ const goalsRouter = router({
     ),
 });
 
-// ─── App Router ───────────────────────────────────────────────────────────────────
+// ─── Dashboard Router ─────────────────────────────────────────────────────────────────────────────────
 
+const VALID_WIDGETS = ["summary", "chart", "recent", "goals"] as const;
+
+const dashboardRouter = router({
+  getPrefs: protectedProcedure.query(({ ctx }) =>
+    getDashboardPrefs(ctx.user.id)
+  ),
+
+  savePrefs: protectedProcedure
+    .input(
+      z.object({
+        widgetOrder: z.array(z.enum(VALID_WIDGETS)),
+        hiddenWidgets: z.array(z.enum(VALID_WIDGETS)),
+      })
+    )
+    .mutation(({ ctx, input }) =>
+      saveDashboardPrefs(
+        ctx.user.id,
+        input.widgetOrder as WidgetId[],
+        input.hiddenWidgets as WidgetId[]
+      )
+    ),
+});
+
+// ─── App Router ─────────────────────────────────────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -304,6 +331,6 @@ export const appRouter = router({
   reports: reportsRouter,
   recurring: recurringRouter,
   goals: goalsRouter,
+  dashboard: dashboardRouter,
 });
-
 export type AppRouter = typeof appRouter;
