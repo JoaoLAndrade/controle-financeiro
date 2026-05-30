@@ -12,6 +12,7 @@ import {
   PiggyBank,
   Sun,
   Tag,
+  Target,
   X,
   ArrowLeftRight,
 } from "lucide-react";
@@ -28,6 +29,7 @@ const navItems = [
   { href: "/", label: "Visão Geral", icon: LayoutDashboard },
   { href: "/transacoes", label: "Transações", icon: ArrowLeftRight },
   { href: "/recorrencias", label: "Recorrências", icon: CalendarClock },
+  { href: "/metas", label: "Metas", icon: Target },
   { href: "/categorias", label: "Categorias", icon: Tag },
   { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
 ];
@@ -53,6 +55,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         utils.reports.monthlyEvolution.invalidate();
         utils.reports.categoryBreakdown.invalidate();
         utils.transactions.list.invalidate();
+        utils.goals.list.invalidate();
       }
     },
   });

@@ -2,13 +2,16 @@ import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   Category,
+  Goal,
   InsertCategory,
+  InsertGoal,
   InsertRecurringTransaction,
   InsertTransaction,
   InsertUser,
   RecurringTransaction,
   Transaction,
   categories,
+  goals,
   recurringTransactions,
   transactions,
   users,
@@ -440,6 +443,132 @@ export async function generateRecurringForMonth(
   }
 
   return created;
+}
+
+// ─── Goals ───────────────────────────────────────────────────────────────────
+
+export interface GoalWithProgress {
+  id: number;
+  userId: number;
+  categoryId: number | null;
+  name: string;
+  targetAmount: string;
+  type: "income" | "expense";
+  createdAt: Date;
+  updatedAt: Date;
+  categoryName: string | null;
+  categoryColor: string | null;
+  spent: string;
+  percentage: number;
+}
+
+export async function getGoalsWithProgress(
+  userId: number,
+  year: number,
+  month: number
+): Promise<GoalWithProgress[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0, 23, 59, 59);
+
+  // Fetch all goals for user
+  const goalsRows = await db
+    .select({
+      id: goals.id,
+      userId: goals.userId,
+      categoryId: goals.categoryId,
+      name: goals.name,
+      targetAmount: goals.targetAmount,
+      type: goals.type,
+      createdAt: goals.createdAt,
+      updatedAt: goals.updatedAt,
+      categoryName: categories.name,
+      categoryColor: categories.color,
+    })
+    .from(goals)
+    .leftJoin(categories, and(eq(goals.categoryId, categories.id), eq(categories.userId, userId)))
+    .where(eq(goals.userId, userId))
+    .orderBy(goals.name);
+
+  if (goalsRows.length === 0) return [];
+
+  // Fetch spending per category for the month
+  const spendingRows = await db
+    .select({
+      categoryId: transactions.categoryId,
+      type: transactions.type,
+      total: sql<string>`SUM(${transactions.amount})`,
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        gte(transactions.date, startDate),
+        lte(transactions.date, endDate)
+      )
+    )
+    .groupBy(transactions.categoryId, transactions.type);
+
+  // Build a map: categoryId+type -> total
+  const spendingMap = new Map<string, number>();
+  for (const row of spendingRows) {
+    const key = `${row.categoryId ?? "null"}-${row.type}`;
+    spendingMap.set(key, parseFloat(row.total ?? "0"));
+  }
+
+  // Build total per type (for goals without a specific category)
+  const totalByType = new Map<string, number>();
+  for (const row of spendingRows) {
+    const prev = totalByType.get(row.type) ?? 0;
+    totalByType.set(row.type, prev + parseFloat(row.total ?? "0"));
+  }
+
+  return goalsRows.map((g) => {
+    let spent: number;
+    if (g.categoryId === null) {
+      // No specific category: track total spending of this type
+      spent = totalByType.get(g.type) ?? 0;
+    } else {
+      const key = `${g.categoryId}-${g.type}`;
+      spent = spendingMap.get(key) ?? 0;
+    }
+    const target = parseFloat(g.targetAmount);
+    const percentage = target > 0 ? Math.round((spent / target) * 100) : 0;
+    return {
+      ...g,
+      spent: spent.toFixed(2),
+      percentage,
+    };
+  });
+}
+
+export async function createGoal(data: InsertGoal): Promise<Goal> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(goals).values(data).$returningId();
+  const [goal] = await db.select().from(goals).where(eq(goals.id, result.id)).limit(1);
+  return goal;
+}
+
+export async function updateGoal(
+  id: number,
+  userId: number,
+  data: Partial<Pick<InsertGoal, "name" | "targetAmount" | "categoryId" | "type">>
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(goals)
+    .set(data)
+    .where(and(eq(goals.id, id), eq(goals.userId, userId)));
+}
+
+export async function deleteGoal(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, userId)));
 }
 
 export async function getTotalBalance(userId: number) {

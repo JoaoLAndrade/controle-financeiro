@@ -51,6 +51,7 @@ export default function Transactions() {
       toast.success("Transação excluída.");
       setDeletingId(null);
       refetch();
+      utils.goals.list.invalidate();
     },
     onError: (e) => toast.error(`Erro: ${e.message}`),
   });
@@ -61,6 +62,7 @@ export default function Transactions() {
     utils.reports.summary.invalidate();
     utils.reports.totalBalance.invalidate();
     utils.reports.monthlyEvolution.invalidate();
+    utils.goals.list.invalidate();
   };
 
   const filtered = useMemo(() => {

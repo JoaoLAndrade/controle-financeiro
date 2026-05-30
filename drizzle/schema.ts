@@ -69,3 +69,17 @@ export const recurringTransactions = mysqlTable("recurring_transactions", {
 
 export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
 export type InsertRecurringTransaction = typeof recurringTransactions.$inferInsert;
+
+export const goals = mysqlTable("goals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  categoryId: int("categoryId"),
+  name: varchar("name", { length: 100 }).notNull(),
+  targetAmount: decimal("targetAmount", { precision: 15, scale: 2 }).notNull(),
+  type: mysqlEnum("type", ["income", "expense"]).notNull().default("expense"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Goal = typeof goals.$inferSelect;
+export type InsertGoal = typeof goals.$inferInsert;

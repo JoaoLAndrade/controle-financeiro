@@ -79,3 +79,13 @@
 - [x] Habilitar ThemeProvider como switchable em App.tsx
 - [x] Adicionar toggle de tema no sidebar (AppLayout.tsx)
 - [x] Verificar contraste e legibilidade em todas as páginas no tema dark
+
+## Metas Financeiras por Categoria
+- [x] Tabela `goals` no schema (id, userId, categoryId, name, targetAmount, type, createdAt)
+- [x] Migração aplicada no banco
+- [x] Helpers `getGoalsWithProgress`, `createGoal`, `updateGoal`, `deleteGoal` no db.ts
+- [x] Router `goals`: list, create, update, delete (com validação de ownership de categoryId)
+- [x] Página `/metas` com listagem, criação/edição e exclusão de metas
+- [x] Widget de metas no Dashboard com barra de progresso e alerta visual ≥80%
+- [x] Link no sidebar (Target icon, entre Recorrências e Categorias)
+- [x] Testes vitest para router de metas (9 testes)

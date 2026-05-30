@@ -6,20 +6,24 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   createCategory,
+  createGoal,
   createRecurring,
   createTransaction,
   deleteCategory,
+  deleteGoal,
   deleteRecurring,
   deleteTransaction,
   generateRecurringForMonth,
   getCategoriesByUser,
   getCategoryBreakdown,
+  getGoalsWithProgress,
   getMonthlyEvolution,
   getMonthlySummary,
   getRecurringByUser,
   getTotalBalance,
   getTransactions,
   updateCategory,
+  updateGoal,
   updateRecurring,
   updateTransaction,
 } from "./db";
@@ -216,7 +220,65 @@ const recurringRouter = router({
     ),
 });
 
-// ─── App Router ───────────────────────────────────────────────────────────────
+// ─── Goals Router ───────────────────────────────────────────────────────────────
+
+const goalsRouter = router({
+  list: protectedProcedure
+    .input(z.object({ year: z.number(), month: z.number().min(1).max(12) }))
+    .query(({ ctx, input }) =>
+      getGoalsWithProgress(ctx.user.id, input.year, input.month)
+    ),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(100),
+        targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/),
+        type: z.enum(["income", "expense"]).default("expense"),
+        categoryId: z.number().nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.categoryId) {
+        const cats = await getCategoriesByUser(ctx.user.id);
+        if (!cats.find((c) => c.id === input.categoryId)) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
+        }
+      }
+      return createGoal({
+        ...input,
+        userId: ctx.user.id,
+        categoryId: input.categoryId ?? null,
+      });
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().min(1).max(100).optional(),
+        targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+        type: z.enum(["income", "expense"]).optional(),
+        categoryId: z.number().nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.categoryId) {
+        const cats = await getCategoriesByUser(ctx.user.id);
+        if (!cats.find((c) => c.id === input.categoryId)) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
+        }
+      }
+      const { id, ...data } = input;
+      return updateGoal(id, ctx.user.id, data);
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(({ ctx, input }) => deleteGoal(input.id, ctx.user.id)),
+});
+
+// ─── App Router ───────────────────────────────────────────────────────────────────
 
 export const appRouter = router({
   system: systemRouter,
@@ -232,6 +294,7 @@ export const appRouter = router({
   transactions: transactionsRouter,
   reports: reportsRouter,
   recurring: recurringRouter,
+  goals: goalsRouter,
 });
 
 export type AppRouter = typeof appRouter;

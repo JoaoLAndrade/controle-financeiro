@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `goals` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `categoryId` int,\n  `name` varchar(100) NOT NULL,\n  `targetAmount` decimal(15,2) NOT NULL,\n  `type` enum('income','expense') NOT NULL DEFAULT 'expense',\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `goals_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `goals_userId_idx` ON `goals` (`userId`);\nCREATE INDEX `goals_userId_categoryId_idx` ON `goals` (`userId`, `categoryId`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute CREATE TABLE `goals` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `categoryId` int,\n  `name` varchar(100) NOT NULL,\n  `targetAmount` decimal(15,2) NOT NULL,\n  `type` enum('income','expense') NOT NULL DEFAULT 'expense',\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `goals_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `goals_userId_idx` ON `goals` (`userId`);\nCREATE INDEX `goals_userId_categoryId_idx` ON `goals` (`userId`, `categoryId`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 703
+}

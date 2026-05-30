@@ -3,7 +3,7 @@ import { formatCurrency, formatDate, getCurrentMonthYear, formatMonthYear, forma
 import { cn } from "@/lib/utils";
 import {
   TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight,
-  ArrowLeftRight, Plus, Calendar
+  ArrowLeftRight, Plus, Calendar, Target, AlertTriangle, CheckCircle2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,7 @@ export default function Dashboard() {
     startDate: new Date(year, month - 1, 1),
     endDate: new Date(year, month, 0, 23, 59, 59),
   });
+  const { data: goalsData = [], isLoading: goalsLoading } = trpc.goals.list.useQuery({ year, month });
 
   const utils = trpc.useUtils();
 
@@ -83,6 +84,7 @@ export default function Dashboard() {
     utils.reports.totalBalance.invalidate();
     utils.reports.monthlyEvolution.invalidate();
     utils.transactions.list.invalidate();
+    utils.goals.list.invalidate();
   };
 
   const chartData = useMemo(() => {
@@ -250,6 +252,77 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Goals widget */}
+      {(goalsLoading || goalsData.length > 0) && (
+        <Card className="card-shadow border-border/60">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Target className="w-4 h-4 text-muted-foreground" />
+              Metas do Mês
+            </CardTitle>
+            <Link href="/metas" className="text-xs text-primary hover:underline font-medium">
+              Ver todas
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {goalsLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {goalsData.slice(0, 4).map((goal) => {
+                  const pct = Math.min(goal.percentage, 100);
+                  const isAlert = goal.percentage >= 80;
+                  const isExceeded = goal.percentage >= 100;
+                  return (
+                    <div
+                      key={goal.id}
+                      className={cn(
+                        "rounded-xl p-4 border transition-colors",
+                        isExceeded
+                          ? "border-red-500/30 bg-red-500/5"
+                          : isAlert
+                          ? "border-amber-500/30 bg-amber-500/5"
+                          : "border-border/60 bg-card"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-sm font-medium text-foreground truncate">{goal.name}</p>
+                        {isExceeded ? (
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
+                        ) : isAlert ? (
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        )}
+                      </div>
+                      <div className="relative h-1.5 w-full rounded-full bg-muted overflow-hidden mb-2">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            isExceeded ? "bg-red-500" : isAlert ? "bg-amber-500" : "bg-emerald-500"
+                          )}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{formatCurrency(parseFloat(goal.spent))}</span>
+                        <span className={cn(
+                          "font-semibold",
+                          isExceeded ? "text-red-500" : isAlert ? "text-amber-500" : "text-emerald-500"
+                        )}>{goal.percentage}%</span>
+                        <span>{formatCurrency(parseFloat(goal.targetAmount))}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <TransactionModal open={modalOpen} onOpenChange={setModalOpen} onSuccess={onSuccess} />
     </div>
