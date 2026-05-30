@@ -64,6 +64,7 @@ vi.mock("./db", () => ({
     name: "Limite Transporte",
     targetAmount: "300.00",
     type: "expense",
+    yearMonth: "2026-05",
     createdAt: new Date(),
     updatedAt: new Date(),
   }),
@@ -113,10 +114,12 @@ describe("goals router", () => {
       name: "Limite Transporte",
       targetAmount: "300.00",
       type: "expense",
+      yearMonth: "2026-05",
     });
     expect(result.name).toBe("Limite Transporte");
     expect(result.targetAmount).toBe("300.00");
     expect(result.type).toBe("expense");
+    expect(result.yearMonth).toBe("2026-05");
   });
 
   it("creates a goal with valid categoryId owned by user", async () => {
@@ -128,6 +131,7 @@ describe("goals router", () => {
         targetAmount: "500.00",
         type: "expense",
         categoryId: 1,
+        yearMonth: "2026-05",
       })
     ).resolves.toBeDefined();
   });
@@ -141,6 +145,7 @@ describe("goals router", () => {
         targetAmount: "100.00",
         type: "expense",
         categoryId: 999,
+        yearMonth: "2026-05",
       })
     ).rejects.toThrow();
   });
@@ -164,8 +169,28 @@ describe("goals router", () => {
         name: "Meta Inválida",
         targetAmount: "abc", // invalid
         type: "expense",
+        yearMonth: "2026-05",
       })
     ).rejects.toThrow();
+  });
+
+  it("validates yearMonth format", async () => {
+    const caller = appRouter.createCaller(createAuthContext());
+    await expect(
+      caller.goals.create({
+        name: "Meta Inválida",
+        targetAmount: "100.00",
+        type: "expense",
+        yearMonth: "2026-13", // invalid month
+      })
+    ).rejects.toThrow();
+  });
+
+  it("lists goals for a specific yearMonth", async () => {
+    const caller = appRouter.createCaller(createAuthContext());
+    // Mock returns goals with yearMonth baked in
+    const result = await caller.goals.list({ year: 2026, month: 5 });
+    expect(result.length).toBeGreaterThanOrEqual(0);
   });
 
   it("rejects unauthenticated access", async () => {

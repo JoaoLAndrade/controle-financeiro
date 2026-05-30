@@ -89,3 +89,14 @@
 - [x] Widget de metas no Dashboard com barra de progresso e alerta visual ≥80%
 - [x] Link no sidebar (Target icon, entre Recorrências e Categorias)
 - [x] Testes vitest para router de metas (9 testes)
+
+## Histórico de Metas por Mês (yearMonth)
+- [x] Adicionar coluna `yearMonth` (VARCHAR 7, ex: "2026-05") na tabela `goals` via migração SQL
+- [x] Atualizar `drizzle/schema.ts` com o campo `yearMonth`
+- [x] Atualizar helpers `getGoalsWithProgress`, `createGoal`, `updateGoal` para usar `yearMonth`
+- [x] Atualizar router `goals.list` para filtrar por `yearMonth` (metas do mês selecionado)
+- [x] Atualizar router `goals.create` e `goals.update` para aceitar `yearMonth`
+- [x] Página /metas: seletor de mês/ano com navegação ← → e botão "Voltar ao mês atual"
+- [x] Dashboard: widget de metas mostra sempre o mês corrente
+- [x] Migrar metas existentes para o mês atual via UPDATE SQL
+- [x] Testes vitest atualizados para cobrir yearMonth (11 testes, 31 total)

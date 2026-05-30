@@ -236,6 +236,7 @@ const goalsRouter = router({
         targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/),
         type: z.enum(["income", "expense"]).default("expense"),
         categoryId: z.number().nullable().optional(),
+        yearMonth: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -260,6 +261,7 @@ const goalsRouter = router({
         targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
         type: z.enum(["income", "expense"]).optional(),
         categoryId: z.number().nullable().optional(),
+        yearMonth: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

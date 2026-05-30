@@ -3,39 +3,27 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Target, Plus, Pencil, Trash2, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  Target, Plus, Pencil, Trash2, TrendingUp, TrendingDown,
+  AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, MONTH_NAMES } from "@/lib/format";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -50,7 +38,7 @@ const goalSchema = z.object({
 
 type GoalFormData = z.infer<typeof goalSchema>;
 
-// ─── Progress bar color helper ────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function progressColor(pct: number): string {
   if (pct >= 100) return "bg-red-500";
@@ -66,27 +54,22 @@ function progressTextColor(pct: number): string {
 
 function statusLabel(pct: number): { label: string; icon: React.ReactNode } {
   if (pct >= 100)
-    return {
-      label: "Meta atingida",
-      icon: <AlertTriangle className="w-3.5 h-3.5 text-red-500" />,
-    };
+    return { label: "Limite atingido", icon: <AlertTriangle className="w-3.5 h-3.5 text-red-500" /> };
   if (pct >= 80)
-    return {
-      label: "Atenção",
-      icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />,
-    };
-  return {
-    label: "No caminho",
-    icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />,
-  };
+    return { label: "Atenção", icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> };
+  return { label: "No caminho", icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> };
+}
+
+function toYearMonth(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, "0")}`;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Goals() {
   const now = useMemo(() => new Date(), []);
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -142,6 +125,19 @@ export default function Goals() {
   const typeValue = watch("type");
   const categoryIdValue = watch("categoryId");
 
+  // Month navigation
+  function prevMonth() {
+    if (month === 1) { setMonth(12); setYear((y) => y - 1); }
+    else setMonth((m) => m - 1);
+  }
+  function nextMonth() {
+    const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+    if (isCurrentMonth) return; // don't go into the future
+    if (month === 12) { setMonth(1); setYear((y) => y + 1); }
+    else setMonth((m) => m + 1);
+  }
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+
   function openCreate() {
     reset({ type: "expense", name: "", targetAmount: "", categoryId: undefined });
     setEditingId(null);
@@ -165,6 +161,7 @@ export default function Goals() {
       targetAmount: data.targetAmount,
       type: data.type,
       categoryId: data.categoryId ? Number(data.categoryId) : null,
+      yearMonth: toYearMonth(year, month),
     };
     if (editingId !== null) {
       updateGoal.mutate({ id: editingId, ...payload });
@@ -179,48 +176,69 @@ export default function Goals() {
   const warning = goalsData.filter((g) => g.percentage >= 80 && g.percentage < 100).length;
   const exceeded = goalsData.filter((g) => g.percentage >= 100).length;
 
-  const monthName = now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const monthLabel = `${MONTH_NAMES[month - 1]} de ${year}`;
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 lg:p-8 space-y-6 max-w-5xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-serif text-foreground">Metas Financeiras</h1>
-          <p className="text-sm text-muted-foreground mt-0.5 capitalize">{monthName}</p>
+          <h1 className="font-display text-2xl font-semibold text-foreground">Metas Financeiras</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Limites mensais por categoria
+          </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
+        <Button onClick={openCreate} className="gap-2 h-9">
           <Plus className="w-4 h-4" />
           Nova Meta
         </Button>
       </div>
 
+      {/* Month navigator */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={prevMonth}
+          className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          title="Mês anterior"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <span className="text-sm font-medium text-foreground min-w-[140px] text-center capitalize">
+          {monthLabel}
+        </span>
+        <button
+          onClick={nextMonth}
+          disabled={isCurrentMonth}
+          className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          title="Próximo mês"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+        {!isCurrentMonth && (
+          <button
+            onClick={() => { setYear(now.getFullYear()); setMonth(now.getMonth() + 1); }}
+            className="text-xs text-primary hover:underline ml-1"
+          >
+            Voltar ao mês atual
+          </button>
+        )}
+      </div>
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Total de Metas</p>
-            <p className="text-2xl font-bold text-foreground">{total}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">No Caminho</p>
-            <p className="text-2xl font-bold text-emerald-500">{onTrack}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Atenção</p>
-            <p className="text-2xl font-bold text-amber-500">{warning}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Atingidas</p>
-            <p className="text-2xl font-bold text-red-500">{exceeded}</p>
-          </CardContent>
-        </Card>
+        {[
+          { label: "Total de Metas", value: total, color: "text-foreground" },
+          { label: "No Caminho", value: onTrack, color: "text-emerald-500" },
+          { label: "Atenção (≥80%)", value: warning, color: "text-amber-500" },
+          { label: "Limite Atingido", value: exceeded, color: "text-red-500" },
+        ].map(({ label, value, color }) => (
+          <Card key={label} className="border-border/60">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground mb-1">{label}</p>
+              <p className={`text-2xl font-bold font-display ${color}`}>{value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Goals list */}
@@ -234,13 +252,15 @@ export default function Goals() {
         <Card className="border-dashed border-border/60">
           <CardContent className="py-16 flex flex-col items-center gap-3 text-center">
             <Target className="w-10 h-10 text-muted-foreground/40" />
-            <p className="text-muted-foreground font-medium">Nenhuma meta cadastrada</p>
+            <p className="text-muted-foreground font-medium">
+              Nenhuma meta para {monthLabel}
+            </p>
             <p className="text-sm text-muted-foreground/70">
               Crie metas mensais por categoria para acompanhar seus gastos.
             </p>
             <Button variant="outline" onClick={openCreate} className="mt-2 gap-2">
               <Plus className="w-4 h-4" />
-              Criar primeira meta
+              Criar meta para este mês
             </Button>
           </CardContent>
         </Card>
@@ -264,7 +284,6 @@ export default function Goals() {
                     <CardContent className="p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          {/* Category color dot */}
                           <div
                             className="w-3 h-3 rounded-full flex-shrink-0 mt-0.5"
                             style={{ backgroundColor: catColor }}
@@ -272,7 +291,10 @@ export default function Goals() {
                           <div className="min-w-0">
                             <p className="font-semibold text-foreground truncate">{goal.name}</p>
                             <p className="text-xs text-muted-foreground truncate">
-                              {goal.categoryId ? (goal.categoryName ?? "Sem categoria") : "Total do tipo"} ·{" "}
+                              {goal.categoryId
+                                ? (goal.categoryName ?? "Sem categoria")
+                                : "Total do tipo"}{" "}
+                              ·{" "}
                               {goal.type === "expense" ? (
                                 <span className="inline-flex items-center gap-0.5">
                                   <TrendingDown className="w-3 h-3 text-red-400" /> Despesa
@@ -347,14 +369,25 @@ export default function Goals() {
       )}
 
       {/* Create / Edit Modal */}
-      <Dialog open={modalOpen} onOpenChange={(open) => { setModalOpen(open); if (!open) { setEditingId(null); reset(); } }}>
+      <Dialog
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) { setEditingId(null); reset(); }
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif">
+            <DialogTitle className="font-display">
               {editingId !== null ? "Editar Meta" : "Nova Meta"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+            {/* Month info banner */}
+            <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-primary font-medium">
+              Meta para: <span className="capitalize">{monthLabel}</span>
+            </div>
+
             {/* Name */}
             <div className="space-y-1.5">
               <Label htmlFor="goal-name">Nome da Meta</Label>
@@ -395,16 +428,12 @@ export default function Goals() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Todas as categorias" />
+                  <SelectValue placeholder="Total do tipo (sem filtro)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Todas as categorias</SelectItem>
+                  <SelectItem value="none">Total do tipo (sem filtro)</SelectItem>
                   {categories
-                    .filter(
-                      (c) =>
-                        c.type === typeValue ||
-                        c.type === "both"
-                    )
+                    .filter((c) => c.type === typeValue || c.type === "both")
                     .map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
                         <span className="flex items-center gap-2">
@@ -418,18 +447,21 @@ export default function Goals() {
                     ))}
                 </SelectContent>
               </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Sem categoria = rastreia o total de {typeValue === "expense" ? "despesas" : "receitas"} do mês.
+              </p>
             </div>
 
             {/* Target Amount */}
             <div className="space-y-1.5">
-              <Label htmlFor="goal-amount">Limite ($)</Label>
+              <Label htmlFor="goal-amount">Limite (R$)</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                  $
+                  R$
                 </span>
                 <Input
                   id="goal-amount"
-                  className="pl-7"
+                  className="pl-9"
                   placeholder="0.00"
                   {...register("targetAmount")}
                 />
@@ -459,7 +491,10 @@ export default function Goals() {
       </Dialog>
 
       {/* Delete confirmation */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Meta</AlertDialogTitle>

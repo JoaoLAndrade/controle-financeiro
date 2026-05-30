@@ -454,6 +454,7 @@ export interface GoalWithProgress {
   name: string;
   targetAmount: string;
   type: "income" | "expense";
+  yearMonth: string;
   createdAt: Date;
   updatedAt: Date;
   categoryName: string | null;
@@ -473,7 +474,9 @@ export async function getGoalsWithProgress(
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59);
 
-  // Fetch all goals for user
+  const yearMonth = `${year}-${String(month).padStart(2, "0")}`;
+
+  // Fetch goals for user filtered by yearMonth
   const goalsRows = await db
     .select({
       id: goals.id,
@@ -482,6 +485,7 @@ export async function getGoalsWithProgress(
       name: goals.name,
       targetAmount: goals.targetAmount,
       type: goals.type,
+      yearMonth: goals.yearMonth,
       createdAt: goals.createdAt,
       updatedAt: goals.updatedAt,
       categoryName: categories.name,
@@ -489,7 +493,7 @@ export async function getGoalsWithProgress(
     })
     .from(goals)
     .leftJoin(categories, and(eq(goals.categoryId, categories.id), eq(categories.userId, userId)))
-    .where(eq(goals.userId, userId))
+    .where(and(eq(goals.userId, userId), eq(goals.yearMonth, yearMonth)))
     .orderBy(goals.name);
 
   if (goalsRows.length === 0) return [];
@@ -555,7 +559,7 @@ export async function createGoal(data: InsertGoal): Promise<Goal> {
 export async function updateGoal(
   id: number,
   userId: number,
-  data: Partial<Pick<InsertGoal, "name" | "targetAmount" | "categoryId" | "type">>
+  data: Partial<Pick<InsertGoal, "name" | "targetAmount" | "categoryId" | "type" | "yearMonth">>
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

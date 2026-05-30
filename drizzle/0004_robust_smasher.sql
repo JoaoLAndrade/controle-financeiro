@@ -1,0 +1,1 @@
+ALTER TABLE `goals` ADD `yearMonth` varchar(7) DEFAULT '2026-01' NOT NULL;
