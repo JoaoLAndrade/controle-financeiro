@@ -100,3 +100,11 @@
 - [x] Dashboard: widget de metas mostra sempre o mês corrente
 - [x] Migrar metas existentes para o mês atual via UPDATE SQL
 - [x] Testes vitest atualizados para cobrir yearMonth (11 testes, 31 total)
+
+## Copiar Metas do Mês Anterior
+- [x] Helper `copyGoalsFromPreviousMonth(userId, targetYearMonth)` no db.ts
+- [x] Procedure tRPC `goals.copyFromPrevious` com input `{ yearMonth }`
+- [x] Botão "Copiar de [mês anterior]" no header da página /metas (sempre visível)
+- [x] Botão "Copiar metas de [mês anterior]" também no empty state
+- [x] Toast de confirmação com número de metas copiadas (ou aviso se não houver metas no mês anterior)
+- [x] Testes vitest: 3 novos testes (copia, validação de formato, acesso não autenticado) — 34 testes no total

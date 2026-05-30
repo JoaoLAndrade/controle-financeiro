@@ -70,6 +70,7 @@ vi.mock("./db", () => ({
   }),
   updateGoal: vi.fn().mockResolvedValue(undefined),
   deleteGoal: vi.fn().mockResolvedValue(undefined),
+  copyGoalsFromPreviousMonth: vi.fn().mockResolvedValue(3),
 }));
 
 function createAuthContext(): TrpcContext {
@@ -201,5 +202,30 @@ describe("goals router", () => {
     };
     const caller = appRouter.createCaller(unauthCtx);
     await expect(caller.goals.list({ year: 2026, month: 5 })).rejects.toThrow();
+  });
+
+  it("copies goals from previous month and returns count", async () => {
+    const caller = appRouter.createCaller(createAuthContext());
+    const count = await caller.goals.copyFromPrevious({ yearMonth: "2026-05" });
+    expect(count).toBe(3);
+  });
+
+  it("validates yearMonth format in copyFromPrevious", async () => {
+    const caller = appRouter.createCaller(createAuthContext());
+    await expect(
+      caller.goals.copyFromPrevious({ yearMonth: "2026-00" }) // invalid month 00
+    ).rejects.toThrow();
+  });
+
+  it("rejects copyFromPrevious when unauthenticated", async () => {
+    const unauthCtx: TrpcContext = {
+      user: null,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
+    };
+    const caller = appRouter.createCaller(unauthCtx);
+    await expect(
+      caller.goals.copyFromPrevious({ yearMonth: "2026-05" })
+    ).rejects.toThrow();
   });
 });

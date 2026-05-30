@@ -5,7 +5,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import {
   Target, Plus, Pencil, Trash2, TrendingUp, TrendingDown,
-  AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight,
+  AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Copy,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -110,6 +110,23 @@ export default function Goals() {
     onError: (e) => toast.error(e.message),
   });
 
+  const copyFromPrevious = trpc.goals.copyFromPrevious.useMutation({
+    onSuccess: (count) => {
+      utils.goals.list.invalidate();
+      if (count === 0) {
+        toast.info("Nenhuma meta encontrada no mês anterior.");
+      } else {
+        toast.success(`${count} meta${count !== 1 ? "s" : ""} copiada${count !== 1 ? "s" : ""} do mês anterior!`);
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Compute previous month label for button text
+  const prevMonthYear = month === 1 ? year - 1 : year;
+  const prevMonthNum = month === 1 ? 12 : month - 1;
+  const prevMonthLabel = `${MONTH_NAMES[prevMonthNum - 1]} de ${prevMonthYear}`;
+
   const {
     register,
     handleSubmit,
@@ -188,10 +205,23 @@ export default function Goals() {
             Limites mensais por categoria
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2 h-9">
-          <Plus className="w-4 h-4" />
-          Nova Meta
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => copyFromPrevious.mutate({ yearMonth: toYearMonth(year, month) })}
+            disabled={copyFromPrevious.isPending}
+            className="gap-2 h-9 text-sm"
+            title={`Copiar metas de ${prevMonthLabel}`}
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Copiar de {MONTH_NAMES[prevMonthNum - 1]}</span>
+            <span className="sm:hidden">Copiar</span>
+          </Button>
+          <Button onClick={openCreate} className="gap-2 h-9">
+            <Plus className="w-4 h-4" />
+            Nova Meta
+          </Button>
+        </div>
       </div>
 
       {/* Month navigator */}
@@ -258,10 +288,21 @@ export default function Goals() {
             <p className="text-sm text-muted-foreground/70">
               Crie metas mensais por categoria para acompanhar seus gastos.
             </p>
-            <Button variant="outline" onClick={openCreate} className="mt-2 gap-2">
-              <Plus className="w-4 h-4" />
-              Criar meta para este mês
-            </Button>
+            <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
+              <Button
+                variant="outline"
+                onClick={() => copyFromPrevious.mutate({ yearMonth: toYearMonth(year, month) })}
+                disabled={copyFromPrevious.isPending}
+                className="gap-2"
+              >
+                <Copy className="w-4 h-4" />
+                Copiar metas de {prevMonthLabel}
+              </Button>
+              <Button variant="outline" onClick={openCreate} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Criar meta para este mês
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (

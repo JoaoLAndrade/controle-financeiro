@@ -575,6 +575,52 @@ export async function deleteGoal(id: number, userId: number): Promise<void> {
   await db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, userId)));
 }
 
+/**
+ * Copies all goals from the previous month into targetYearMonth.
+ * Only copies if targetYearMonth has NO goals yet.
+ * Returns the number of goals copied (0 if source is empty or target already has goals).
+ */
+export async function copyGoalsFromPreviousMonth(
+  userId: number,
+  targetYearMonth: string // "YYYY-MM"
+): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Compute previous month
+  const [yearStr, monthStr] = targetYearMonth.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const sourceYearMonth = `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
+
+  // Check if target already has goals
+  const existing = await db
+    .select({ id: goals.id })
+    .from(goals)
+    .where(and(eq(goals.userId, userId), eq(goals.yearMonth, targetYearMonth)))
+    .limit(1);
+  if (existing.length > 0) return 0;
+
+  // Fetch source goals
+  const sourceGoals = await db
+    .select()
+    .from(goals)
+    .where(and(eq(goals.userId, userId), eq(goals.yearMonth, sourceYearMonth)));
+  if (sourceGoals.length === 0) return 0;
+
+  // Insert copies with new yearMonth
+  await db.insert(goals).values(
+    sourceGoals.map(({ id: _id, createdAt: _c, updatedAt: _u, ...rest }) => ({
+      ...rest,
+      yearMonth: targetYearMonth,
+    }))
+  );
+
+  return sourceGoals.length;
+}
+
 export async function getTotalBalance(userId: number) {
   const db = await getDb();
   if (!db) return "0";

@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   createCategory,
+  copyGoalsFromPreviousMonth,
   createGoal,
   createRecurring,
   createTransaction,
@@ -278,6 +279,12 @@ const goalsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(({ ctx, input }) => deleteGoal(input.id, ctx.user.id)),
+
+  copyFromPrevious: protectedProcedure
+    .input(z.object({ yearMonth: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }))
+    .mutation(({ ctx, input }) =>
+      copyGoalsFromPreviousMonth(ctx.user.id, input.yearMonth)
+    ),
 });
 
 // ─── App Router ───────────────────────────────────────────────────────────────────
