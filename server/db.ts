@@ -1,4 +1,5 @@
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   Category,
@@ -86,6 +87,17 @@ export async function getCategoriesByUser(userId: number): Promise<Category[]> {
   return db.select().from(categories).where(eq(categories.userId, userId)).orderBy(categories.name);
 }
 
+export async function checkCategoryOwnership(categoryId: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+    .limit(1);
+  return result.length > 0;
+}
+
 export async function createCategory(data: InsertCategory): Promise<Category> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -110,6 +122,33 @@ export async function updateCategory(
 export async function deleteCategory(id: number, userId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Check for linked records before deleting
+  const [txCount] = await db
+    .select({ count: count() })
+    .from(transactions)
+    .where(and(eq(transactions.categoryId, id), eq(transactions.userId, userId)));
+  const [recCount] = await db
+    .select({ count: count() })
+    .from(recurringTransactions)
+    .where(and(eq(recurringTransactions.categoryId, id), eq(recurringTransactions.userId, userId)));
+  const [goalCount] = await db
+    .select({ count: count() })
+    .from(goals)
+    .where(and(eq(goals.categoryId, id), eq(goals.userId, userId)));
+
+  const total = (txCount?.count ?? 0) + (recCount?.count ?? 0) + (goalCount?.count ?? 0);
+  if (total > 0) {
+    const parts: string[] = [];
+    if ((txCount?.count ?? 0) > 0) parts.push(`${txCount.count} transação(s)`);
+    if ((recCount?.count ?? 0) > 0) parts.push(`${recCount.count} recorrência(s)`);
+    if ((goalCount?.count ?? 0) > 0) parts.push(`${goalCount.count} meta(s)`);
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: `Não é possível excluir: categoria possui ${parts.join(", ")} vinculada(s). Remova ou reatribua antes de excluir.`,
+    });
+  }
+
   await db.delete(categories).where(and(eq(categories.id, id), eq(categories.userId, userId)));
 }
 

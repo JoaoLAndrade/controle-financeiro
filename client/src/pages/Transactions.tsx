@@ -39,7 +39,7 @@ export default function Transactions() {
   const endDate = useMemo(() => new Date(year, month, 0, 23, 59, 59), [year, month]);
 
   const { data: categories } = trpc.categories.list.useQuery();
-  const { data: transactions, isLoading, refetch } = trpc.transactions.list.useQuery({
+  const { data: transactions, isLoading, isError, refetch } = trpc.transactions.list.useQuery({
     startDate,
     endDate,
     type: typeFilter === "all" ? undefined : typeFilter,
@@ -206,7 +206,11 @@ export default function Transactions() {
 
       {/* Transactions list */}
       <Card className="card-shadow border-border/60 overflow-hidden">
-        {isLoading ? (
+        {isError ? (
+          <div className="flex flex-col items-center justify-center py-16 text-destructive gap-3">
+            <p className="text-sm font-medium">Erro ao carregar transações. Tente recarregar a página.</p>
+          </div>
+        ) : isLoading ? (
           <div className="divide-y divide-border">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 p-4">

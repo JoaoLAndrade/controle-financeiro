@@ -466,7 +466,7 @@ export default function Dashboard() {
                   tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => v >= 1000 ? `R$\u00a0${(v / 1000).toFixed(0)}k` : formatCurrency(v)}
                   width={44}
                 />
                 <Tooltip content={<CustomTooltip />} />

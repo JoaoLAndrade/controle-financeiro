@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE transactions\n  ADD CONSTRAINT fk_transactions_category\n  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL ON UPDATE CASCADE;\n\nALTER TABLE recurring_transactions\n  ADD CONSTRAINT fk_recurring_category\n  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL ON UPDATE CASCADE;\n\nALTER TABLE goals\n  ADD CONSTRAINT fk_goals_category\n  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL ON UPDATE CASCADE;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute ALTER TABLE transactions\n  ADD CONSTRAINT fk_transactions_category\n  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL ON UPDATE CASCADE;\n\nALTER TABLE recurring_transactions\n  ADD CONSTRAINT fk_recurring_category\n  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL ON UPDATE CASCADE;\n\nALTER TABLE goals\n  ADD CONSTRAINT fk_goals_category\n  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL ON UPDATE CASCADE;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1424
+}

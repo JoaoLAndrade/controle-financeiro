@@ -71,6 +71,9 @@ vi.mock("./db", () => ({
   updateGoal: vi.fn().mockResolvedValue(undefined),
   deleteGoal: vi.fn().mockResolvedValue(undefined),
   copyGoalsFromPreviousMonth: vi.fn().mockResolvedValue(3),
+  checkCategoryOwnership: vi.fn().mockResolvedValue(true),
+  getDashboardPrefs: vi.fn().mockResolvedValue({ widgetOrder: [], hiddenWidgets: [] }),
+  saveDashboardPrefs: vi.fn().mockResolvedValue(undefined),
 }));
 
 function createAuthContext(): TrpcContext {
@@ -138,8 +141,9 @@ describe("goals router", () => {
   });
 
   it("rejects goal creation with categoryId not belonging to user", async () => {
+    const { checkCategoryOwnership } = await import("./db");
+    (checkCategoryOwnership as ReturnType<typeof vi.fn>).mockResolvedValueOnce(false);
     const caller = appRouter.createCaller(createAuthContext());
-    // categoryId: 999 is NOT in the mock getCategoriesByUser result
     await expect(
       caller.goals.create({
         name: "Meta Inválida",

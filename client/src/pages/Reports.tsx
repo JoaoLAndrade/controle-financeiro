@@ -63,9 +63,10 @@ export default function Reports() {
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
 
-  const { data: summary, isLoading: summaryLoading } = trpc.reports.summary.useQuery({ year, month });
-  const { data: breakdown, isLoading: breakdownLoading } = trpc.reports.categoryBreakdown.useQuery({ year, month });
-  const { data: evolution, isLoading: evolutionLoading } = trpc.reports.monthlyEvolution.useQuery({ months: 12 });
+  const { data: summary, isLoading: summaryLoading, isError: summaryError } = trpc.reports.summary.useQuery({ year, month });
+  const { data: breakdown, isLoading: breakdownLoading, isError: breakdownError } = trpc.reports.categoryBreakdown.useQuery({ year, month });
+  const { data: evolution, isLoading: evolutionLoading, isError: evolutionError } = trpc.reports.monthlyEvolution.useQuery({ months: 12 });
+  const hasError = summaryError || breakdownError || evolutionError;
 
   const income = parseFloat(summary?.income ?? "0");
   const expense = parseFloat(summary?.expense ?? "0");
@@ -155,6 +156,13 @@ export default function Reports() {
           </Select>
         </div>
       </div>
+
+      {/* Error banner */}
+      {hasError && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          Erro ao carregar alguns dados do relatório. Tente recarregar a página.
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -337,7 +345,7 @@ export default function Reports() {
               <BarChart data={barData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} width={48} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `R$\u00a0${(v / 1000).toFixed(0)}k` : formatCurrency(v)} width={56} />
                 <Tooltip content={<CustomBarTooltip />} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                 <Bar dataKey="Receitas" fill="var(--income)" radius={[4, 4, 0, 0]} maxBarSize={32} />

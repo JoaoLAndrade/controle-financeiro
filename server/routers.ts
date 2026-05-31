@@ -15,6 +15,7 @@ import {
   deleteRecurring,
   deleteTransaction,
   generateRecurringForMonth,
+  checkCategoryOwnership,
   getCategoriesByUser,
   getCategoryBreakdown,
   getDashboardPrefs,
@@ -41,7 +42,7 @@ const categoriesRouter = router({
     .input(
       z.object({
         name: z.string().min(1).max(100),
-        color: z.string().default("#6366f1"),
+        color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default("#6366f1"),
         icon: z.string().default("tag"),
         type: z.enum(["income", "expense", "both"]).default("both"),
       })
@@ -55,7 +56,7 @@ const categoriesRouter = router({
       z.object({
         id: z.number(),
         name: z.string().min(1).max(100).optional(),
-        color: z.string().optional(),
+        color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
         icon: z.string().optional(),
         type: z.enum(["income", "expense", "both"]).optional(),
       })
@@ -89,7 +90,7 @@ const transactionsRouter = router({
   create: protectedProcedure
     .input(
       z.object({
-        amount: z.string().regex(/^\d+(\.\d{1,2})?$/),
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).refine((v) => parseFloat(v) > 0, { message: "Valor deve ser maior que zero" }),
         date: z.date(),
         description: z.string().min(1).max(255),
         categoryId: z.number().nullable().optional(),
@@ -98,10 +99,8 @@ const transactionsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       if (input.categoryId) {
-        const cats = await getCategoriesByUser(ctx.user.id);
-        if (!cats.find((c) => c.id === input.categoryId)) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
-        }
+        const owns = await checkCategoryOwnership(input.categoryId, ctx.user.id);
+        if (!owns) throw new TRPCError({ code: "FORBIDDEN", message: "Categoria não pertence ao usuário" });
       }
       return createTransaction({
         ...input,
@@ -114,7 +113,7 @@ const transactionsRouter = router({
     .input(
       z.object({
         id: z.number(),
-        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).refine((v) => parseFloat(v) > 0, { message: "Valor deve ser maior que zero" }).optional(),
         date: z.date().optional(),
         description: z.string().min(1).max(255).optional(),
         categoryId: z.number().nullable().optional(),
@@ -123,10 +122,8 @@ const transactionsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       if (input.categoryId) {
-        const cats = await getCategoriesByUser(ctx.user.id);
-        if (!cats.find((c) => c.id === input.categoryId)) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
-        }
+        const owns = await checkCategoryOwnership(input.categoryId, ctx.user.id);
+        if (!owns) throw new TRPCError({ code: "FORBIDDEN", message: "Categoria não pertence ao usuário" });
       }
       const { id, ...data } = input;
       return updateTransaction(id, ctx.user.id, data);
@@ -141,7 +138,7 @@ const transactionsRouter = router({
 
 const reportsRouter = router({
   summary: protectedProcedure
-    .input(z.object({ year: z.number(), month: z.number().min(1).max(12) }))
+    .input(z.object({ year: z.number().min(2000).max(2100), month: z.number().min(1).max(12) }))
     .query(({ ctx, input }) =>
       getMonthlySummary(ctx.user.id, input.year, input.month)
     ),
@@ -153,7 +150,7 @@ const reportsRouter = router({
     .query(({ ctx, input }) => getMonthlyEvolution(ctx.user.id, input?.months ?? 6)),
 
   categoryBreakdown: protectedProcedure
-    .input(z.object({ year: z.number(), month: z.number().min(1).max(12) }))
+    .input(z.object({ year: z.number().min(2000).max(2100), month: z.number().min(1).max(12) }))
     .query(({ ctx, input }) =>
       getCategoryBreakdown(ctx.user.id, input.year, input.month)
     ),
@@ -168,7 +165,7 @@ const recurringRouter = router({
     .input(
       z.object({
         name: z.string().min(1).max(255),
-        amount: z.string().regex(/^\d+(\.\d{1,2})?$/),
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).refine((v) => parseFloat(v) > 0, { message: "Valor deve ser maior que zero" }),
         type: z.enum(["income", "expense"]),
         categoryId: z.number().nullable().optional(),
         dayOfMonth: z.number().min(1).max(31).default(1),
@@ -177,10 +174,8 @@ const recurringRouter = router({
     .mutation(async ({ ctx, input }) => {
       // Validate categoryId ownership
       if (input.categoryId) {
-        const cats = await getCategoriesByUser(ctx.user.id);
-        if (!cats.find((c) => c.id === input.categoryId)) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
-        }
+        const owns = await checkCategoryOwnership(input.categoryId, ctx.user.id);
+        if (!owns) throw new TRPCError({ code: "FORBIDDEN", message: "Categoria não pertence ao usuário" });
       }
       return createRecurring({
         ...input,
@@ -194,7 +189,7 @@ const recurringRouter = router({
       z.object({
         id: z.number(),
         name: z.string().min(1).max(255).optional(),
-        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).refine((v) => parseFloat(v) > 0, { message: "Valor deve ser maior que zero" }).optional(),
         type: z.enum(["income", "expense"]).optional(),
         categoryId: z.number().nullable().optional(),
         dayOfMonth: z.number().min(1).max(31).optional(),
@@ -204,10 +199,8 @@ const recurringRouter = router({
     .mutation(async ({ ctx, input }) => {
       // Validate categoryId ownership
       if (input.categoryId) {
-        const cats = await getCategoriesByUser(ctx.user.id);
-        if (!cats.find((c) => c.id === input.categoryId)) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
-        }
+        const owns = await checkCategoryOwnership(input.categoryId, ctx.user.id);
+        if (!owns) throw new TRPCError({ code: "FORBIDDEN", message: "Categoria não pertence ao usuário" });
       }
       const { id, ...data } = input;
       return updateRecurring(id, ctx.user.id, data);
@@ -218,7 +211,7 @@ const recurringRouter = router({
     .mutation(({ ctx, input }) => deleteRecurring(input.id, ctx.user.id)),
 
   generateForMonth: protectedProcedure
-    .input(z.object({ year: z.number(), month: z.number().min(1).max(12) }))
+    .input(z.object({ year: z.number().min(2000).max(2100), month: z.number().min(1).max(12) }))
     .mutation(({ ctx, input }) =>
       generateRecurringForMonth(ctx.user.id, input.year, input.month)
     ),
@@ -228,7 +221,7 @@ const recurringRouter = router({
 
 const goalsRouter = router({
   list: protectedProcedure
-    .input(z.object({ year: z.number(), month: z.number().min(1).max(12) }))
+    .input(z.object({ year: z.number().min(2000).max(2100), month: z.number().min(1).max(12) }))
     .query(({ ctx, input }) =>
       getGoalsWithProgress(ctx.user.id, input.year, input.month)
     ),
@@ -237,7 +230,7 @@ const goalsRouter = router({
     .input(
       z.object({
         name: z.string().min(1).max(100),
-        targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/),
+        targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/).refine((v) => parseFloat(v) > 0, { message: "Valor deve ser maior que zero" }),
         type: z.enum(["income", "expense"]).default("expense"),
         categoryId: z.number().nullable().optional(),
         yearMonth: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
@@ -245,10 +238,8 @@ const goalsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       if (input.categoryId) {
-        const cats = await getCategoriesByUser(ctx.user.id);
-        if (!cats.find((c) => c.id === input.categoryId)) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
-        }
+        const owns = await checkCategoryOwnership(input.categoryId, ctx.user.id);
+        if (!owns) throw new TRPCError({ code: "FORBIDDEN", message: "Categoria não pertence ao usuário" });
       }
       return createGoal({
         ...input,
@@ -262,7 +253,7 @@ const goalsRouter = router({
       z.object({
         id: z.number(),
         name: z.string().min(1).max(100).optional(),
-        targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+        targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/).refine((v) => parseFloat(v) > 0, { message: "Valor deve ser maior que zero" }).optional(),
         type: z.enum(["income", "expense"]).optional(),
         categoryId: z.number().nullable().optional(),
         yearMonth: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),
@@ -270,10 +261,8 @@ const goalsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       if (input.categoryId) {
-        const cats = await getCategoriesByUser(ctx.user.id);
-        if (!cats.find((c) => c.id === input.categoryId)) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Categoria n\u00e3o pertence ao usu\u00e1rio" });
-        }
+        const owns = await checkCategoryOwnership(input.categoryId, ctx.user.id);
+        if (!owns) throw new TRPCError({ code: "FORBIDDEN", message: "Categoria não pertence ao usuário" });
       }
       const { id, ...data } = input;
       return updateGoal(id, ctx.user.id, data);

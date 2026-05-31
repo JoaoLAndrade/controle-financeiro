@@ -77,7 +77,7 @@ export const goals = mysqlTable("goals", {
   name: varchar("name", { length: 100 }).notNull(),
   targetAmount: decimal("targetAmount", { precision: 15, scale: 2 }).notNull(),
   type: mysqlEnum("type", ["income", "expense"]).notNull().default("expense"),
-  yearMonth: varchar("yearMonth", { length: 7 }).notNull().default("2026-01"),
+  yearMonth: varchar("yearMonth", { length: 7 }).notNull(), // always provided explicitly by the router
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

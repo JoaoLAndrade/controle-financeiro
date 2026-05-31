@@ -126,3 +126,23 @@
 - [x] Bug 2: Recurring — mesmo fix de normalização de vírgula decimal
 - [x] Bug 3: getDashboardPrefs — JSON.parse envolvido em try/catch com fallback para defaults
 - [x] Bug 4: generateRecurringForMonth — cast corrigido: `const [rows] = ...; const current = rows[0]`
+
+## Revisão Completa — 18 Correções e Melhorias
+- [x] #1 TransactionModal: vírgula decimal (.replace(",","."))
+- [x] #2 Recurring: vírgula decimal (.replace(",","."))
+- [x] #3 getDashboardPrefs: JSON.parse com try/catch
+- [x] #4 SELECT FOR UPDATE: cast correto [rows][0]
+- [x] #5 formatCurrency: currency "USD"→"BRL" e locale "en-US"→"pt-BR" (lib/format.ts)
+- [x] #6 Dashboard gráfico: tickFormatter usando formatCurrency BRL
+- [x] #7 Reports gráfico: tickFormatter usando formatCurrency BRL
+- [x] #8 amount > 0: .refine(v => parseFloat(v) > 0) nos schemas Zod (transactions, recurring, goals)
+- [x] #9 year/month bounds: z.number().min(2000).max(2100) em goals.list, reports e recurring
+- [x] #10 cor hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/) em categories.create/update
+- [x] #11 dayOfMonth: z.number().min(1).max(31) em recurring.create/update
+- [x] #12 widgetOrder: z.array(z.enum(VALID_WIDGETS)) em dashboard.savePrefs
+- [x] #13 deleteCategory: verifica vínculos (transactions, recurring, goals) antes de excluir
+- [x] #14 isError: tratamento de erros de query em Transactions, Goals e Reports
+- [x] #15 yearMonth default: removido hardcode "2026-01"; router sempre fornece explicitamente
+- [x] #16 FK constraints: fk_transactions_category, fk_recurring_category, fk_goals_category via SQL
+- [x] #17 staleTime: staleTime:30000 + retry:1 no QueryClient global (main.tsx)
+- [x] #18 ownership query: checkCategoryOwnership() — query direta WHERE id=? AND userId=? em 5 procedures

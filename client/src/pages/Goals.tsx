@@ -77,7 +77,7 @@ export default function Goals() {
 
   const utils = trpc.useUtils();
 
-  const { data: goalsData = [], isLoading } = trpc.goals.list.useQuery({ year, month });
+  const { data: goalsData = [], isLoading, isError } = trpc.goals.list.useQuery({ year, month });
   const { data: categories = [] } = trpc.categories.list.useQuery();
 
   const createGoal = trpc.goals.create.useMutation({
@@ -272,7 +272,13 @@ export default function Goals() {
       </div>
 
       {/* Goals list */}
-      {isLoading ? (
+      {isError ? (
+        <Card className="border-destructive/40">
+          <CardContent className="py-10 flex flex-col items-center gap-2 text-center">
+            <p className="text-sm font-medium text-destructive">Erro ao carregar metas. Tente recarregar a página.</p>
+          </CardContent>
+        </Card>
+      ) : isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-28 rounded-xl bg-muted/40 animate-pulse" />
