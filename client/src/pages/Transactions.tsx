@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
-import { formatCurrency, formatDate, MONTH_NAMES } from "@/lib/format";
+import { formatDate, MONTH_NAMES } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import {
   ArrowDownRight, ArrowUpRight, CalendarClock, Filter, Loader2, MoreHorizontal,
@@ -25,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import TransactionModal from "@/components/TransactionModal";
 
 export default function Transactions() {
+  const { formatMoney } = useCurrency();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -188,17 +190,17 @@ export default function Transactions() {
           <div className="flex items-center gap-1.5 text-sm">
             <div className="w-2 h-2 rounded-full bg-income" />
             <span className="text-muted-foreground">Receitas:</span>
-            <span className="font-semibold text-income">{formatCurrency(totalIncome)}</span>
+            <span className="font-semibold text-income">{formatMoney(totalIncome)}</span>
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <div className="w-2 h-2 rounded-full bg-expense" />
             <span className="text-muted-foreground">Despesas:</span>
-            <span className="font-semibold text-expense">{formatCurrency(totalExpense)}</span>
+            <span className="font-semibold text-expense">{formatMoney(totalExpense)}</span>
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <span className="text-muted-foreground">Saldo:</span>
             <span className={cn("font-semibold", totalIncome - totalExpense >= 0 ? "text-income" : "text-expense")}>
-              {formatCurrency(totalIncome - totalExpense)}
+              {formatMoney(totalIncome - totalExpense)}
             </span>
           </div>
         </div>
@@ -279,7 +281,7 @@ export default function Transactions() {
                   "text-sm font-semibold flex-shrink-0",
                   tx.type === "income" ? "text-income" : "text-expense"
                 )}>
-                  {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
+                  {tx.type === "income" ? "+" : "-"}{formatMoney(parseFloat(tx.amount))}
                 </p>
 
                 {/* Actions */}

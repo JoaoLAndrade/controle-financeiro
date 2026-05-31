@@ -43,6 +43,13 @@
       "when": 1780147864430,
       "tag": "0005_ancient_ricochet",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1780188036228,
+      "tag": "0006_redundant_celestials",
+      "breakpoints": true
     }
   ]
 }

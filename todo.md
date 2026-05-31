@@ -146,3 +146,14 @@
 - [x] #16 FK constraints: fk_transactions_category, fk_recurring_category, fk_goals_category via SQL
 - [x] #17 staleTime: staleTime:30000 + retry:1 no QueryClient global (main.tsx)
 - [x] #18 ownership query: checkCategoryOwnership() — query direta WHERE id=? AND userId=? em 5 procedures
+
+## Seletor de Moeda (BRL/USD)
+- [x] Coluna `currency` (enum "BRL"|"USD") na tabela `users` via SQL
+- [x] Procedure tRPC `auth.updateCurrency` para salvar preferência
+- [x] Contexto React `CurrencyContext` com `currency`, `setCurrency` e `formatMoney()`
+- [x] `formatMoney` usa locale pt-BR+BRL ou en-US+USD conforme preferência
+- [x] Seletor de moeda no sidebar (botão toggle R$/US$)
+- [x] Aplicar `formatMoney` em Dashboard, Transactions, Goals, Reports, Recurring
+- [x] Persistir preferência no banco ao trocar
+- [x] Testes vitest para `auth.updateCurrency` (4 testes: BRL, USD, acesso não autenticado, valor inválido) — 46 testes no total
+- [x] Rollback de estado local no CurrencyContext se a mutation falhar (onError com toast)

@@ -79,6 +79,12 @@ export async function getUserByOpenId(openId: string) {
   return result[0];
 }
 
+export async function updateUserCurrency(userId: number, currency: "BRL" | "USD"): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ currency }).where(eq(users.id, userId));
+}
+
 // ─── Categories ───────────────────────────────────────────────────────────────
 
 export async function getCategoriesByUser(userId: number): Promise<Category[]> {

@@ -17,6 +17,7 @@ import {
   generateRecurringForMonth,
   checkCategoryOwnership,
   getCategoriesByUser,
+  updateUserCurrency,
   getCategoryBreakdown,
   getDashboardPrefs,
   getGoalsWithProgress,
@@ -314,6 +315,12 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+    updateCurrency: protectedProcedure
+      .input(z.object({ currency: z.enum(["BRL", "USD"]) }))
+      .mutation(async ({ ctx, input }) => {
+        await updateUserCurrency(ctx.user.id, input.currency);
+        return { currency: input.currency };
+      }),
   }),
   categories: categoriesRouter,
   transactions: transactionsRouter,

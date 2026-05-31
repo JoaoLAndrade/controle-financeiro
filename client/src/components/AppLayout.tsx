@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const navItems = [
   { href: "/", label: "Visão Geral", icon: LayoutDashboard },
@@ -41,6 +42,7 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const { user, loading, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { currency, setCurrency } = useCurrency();
   const [location, navigate] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const hasGeneratedRef = useRef(false);
@@ -159,6 +161,34 @@ export default function AppLayout({ children }: AppLayoutProps) {
             );
           })}
         </nav>
+
+        {/* Currency toggle */}
+        <div className="px-3 pb-1">
+          <button
+            onClick={() => setCurrency(currency === "BRL" ? "USD" : "BRL")}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+              "text-muted-foreground hover:text-foreground hover:bg-accent",
+              "transition-all duration-200"
+            )}
+            title={currency === "BRL" ? "Mudar para Dólar (USD)" : "Mudar para Real (BRL)"}
+          >
+            <span className="w-4 h-4 flex-shrink-0 text-base leading-none flex items-center justify-center font-bold">
+              {currency === "BRL" ? "R$" : "$"}
+            </span>
+            <span>{currency === "BRL" ? "Real (BRL)" : "Dólar (USD)"}</span>
+            {/* Toggle pill */}
+            <div className={cn(
+              "ml-auto w-9 h-5 rounded-full transition-colors duration-300 flex items-center px-0.5",
+              currency === "USD" ? "bg-primary" : "bg-muted"
+            )}>
+              <div className={cn(
+                "w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300",
+                currency === "USD" ? "translate-x-4" : "translate-x-0"
+              )} />
+            </div>
+          </button>
+        </div>
 
         {/* Theme toggle */}
         <div className="px-3 pb-2">

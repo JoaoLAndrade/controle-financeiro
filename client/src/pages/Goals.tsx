@@ -23,7 +23,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { formatCurrency, MONTH_NAMES } from "@/lib/format";
+import { MONTH_NAMES } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ function toYearMonth(year: number, month: number): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Goals() {
+  const { formatMoney } = useCurrency();
   const now = useMemo(() => new Date(), []);
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -395,13 +397,13 @@ export default function Goals() {
                           <span>
                             Gasto:{" "}
                             <span className="font-medium text-foreground">
-                              {formatCurrency(parseFloat(goal.spent))}
+                              {formatMoney(parseFloat(goal.spent))}
                             </span>
                           </span>
                           <span>
                             Limite:{" "}
                             <span className="font-medium text-foreground">
-                              {formatCurrency(parseFloat(goal.targetAmount))}
+                              {formatMoney(parseFloat(goal.targetAmount))}
                             </span>
                           </span>
                         </div>

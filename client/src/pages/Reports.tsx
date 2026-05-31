@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
-import { formatCurrency, formatMonthYear, getCurrentMonthYear, MONTH_NAMES } from "@/lib/format";
+import { formatMonthYear, getCurrentMonthYear, MONTH_NAMES } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import {
   BarChart3, TrendingDown, TrendingUp, Wallet, ArrowLeftRight
@@ -28,7 +29,8 @@ const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent
   );
 };
 
-const CustomPieTooltip = ({ active, payload }: any) => {
+function CustomPieTooltip({ active, payload }: any) {
+  const { formatMoney } = useCurrency();
   if (!active || !payload?.length) return null;
   const { name, value, payload: p } = payload[0];
   return (
@@ -37,12 +39,13 @@ const CustomPieTooltip = ({ active, payload }: any) => {
         <div className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }} />
         <span className="font-medium text-foreground">{name}</span>
       </div>
-      <p className="text-muted-foreground">{formatCurrency(value)}</p>
+      <p className="text-muted-foreground">{formatMoney(value)}</p>
     </div>
   );
-};
+}
 
-const CustomBarTooltip = ({ active, payload, label }: any) => {
+function CustomBarTooltip({ active, payload, label }: any) {
+  const { formatMoney } = useCurrency();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-xl p-3 shadow-lg text-xs">
@@ -51,14 +54,15 @@ const CustomBarTooltip = ({ active, payload, label }: any) => {
         <div key={entry.name} className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: entry.fill }} />
           <span className="text-muted-foreground">{entry.name}:</span>
-          <span className="font-medium text-foreground">{formatCurrency(entry.value)}</span>
+          <span className="font-medium text-foreground">{formatMoney(entry.value)}</span>
         </div>
       ))}
     </div>
   );
-};
+}
 
 export default function Reports() {
+  const { formatMoney, currency } = useCurrency();
   const now = getCurrentMonthYear();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
@@ -120,6 +124,7 @@ export default function Reports() {
   }, [evolution]);
 
   const years = Array.from({ length: 5 }, (_, i) => now.year - i);
+  const currencySymbol = currency === "BRL" ? "R$" : "$";
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl">
@@ -200,7 +205,7 @@ export default function Reports() {
                   <Skeleton className="h-6 w-28 mt-1" />
                 ) : (
                   <p className={cn("text-xl font-semibold font-display mt-0.5", colorClass)}>
-                    {formatCurrency(value)}
+                    {formatMoney(value)}
                   </p>
                 )}
               </div>
@@ -257,7 +262,7 @@ export default function Reports() {
                         <span className="text-muted-foreground truncate">{entry.name}</span>
                       </div>
                       <span className="font-medium text-foreground flex-shrink-0 ml-2">
-                        {formatCurrency(entry.value)}
+                        {formatMoney(entry.value)}
                       </span>
                     </div>
                   ))}
@@ -313,7 +318,7 @@ export default function Reports() {
                         <span className="text-muted-foreground truncate">{entry.name}</span>
                       </div>
                       <span className="font-medium text-foreground flex-shrink-0 ml-2">
-                        {formatCurrency(entry.value)}
+                        {formatMoney(entry.value)}
                       </span>
                     </div>
                   ))}
@@ -345,7 +350,7 @@ export default function Reports() {
               <BarChart data={barData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `R$\u00a0${(v / 1000).toFixed(0)}k` : formatCurrency(v)} width={56} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${currencySymbol}\u00a0${(v / 1000).toFixed(0)}k` : formatMoney(v)} width={56} />
                 <Tooltip content={<CustomBarTooltip />} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                 <Bar dataKey="Receitas" fill="var(--income)" radius={[4, 4, 0, 0]} maxBarSize={32} />

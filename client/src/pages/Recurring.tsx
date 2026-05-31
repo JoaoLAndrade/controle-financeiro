@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
-import { formatCurrency, CATEGORY_ICONS } from "@/lib/format";
+import { CATEGORY_ICONS } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -47,6 +48,7 @@ type FormValues = z.infer<typeof schema>;
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => i + 1);
 
 export default function Recurring() {
+  const { formatMoney } = useCurrency();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRec, setEditingRec] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -203,7 +205,7 @@ export default function Recurring() {
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Impacto mensal</p>
                 <p className={cn("text-lg font-semibold font-display", totalMonthly >= 0 ? "text-income" : "text-expense")}>
-                  {totalMonthly >= 0 ? "+" : ""}{formatCurrency(Math.abs(totalMonthly))}
+                  {totalMonthly >= 0 ? "+" : ""}{formatMoney(Math.abs(totalMonthly))}
                 </p>
               </div>
             </CardContent>
@@ -291,7 +293,7 @@ export default function Recurring() {
                   "text-sm font-semibold flex-shrink-0",
                   rec.type === "income" ? "text-income" : "text-expense"
                 )}>
-                  {rec.type === "income" ? "+" : "-"}{formatCurrency(rec.amount)}
+                  {rec.type === "income" ? "+" : "-"}{formatMoney(parseFloat(rec.amount))}
                 </p>
 
                 {/* Toggle active */}

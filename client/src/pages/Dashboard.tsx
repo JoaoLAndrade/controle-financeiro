@@ -1,11 +1,11 @@
 import { trpc } from "@/lib/trpc";
 import {
-  formatCurrency,
   formatDate,
   getCurrentMonthYear,
   formatMonthYear,
   formatShortMonth,
 } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import {
   TrendingUp,
@@ -126,11 +126,10 @@ function SummaryCard({
       </CardContent>
     </Card>
   );
-}
+}// ─── Custom Tooltip ───────────────────────────────────────────────────────────────
 
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
-
-const CustomTooltip = ({ active, payload, label }: any) => {
+function CustomTooltip({ active, payload, label }: any) {
+  const { formatMoney } = useCurrency();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-xl p-3 shadow-lg text-xs">
@@ -143,15 +142,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           />
           <span className="text-muted-foreground">{entry.name}:</span>
           <span className="font-medium text-foreground">
-            {formatCurrency(entry.value)}
+            {formatMoney(entry.value)}
           </span>
         </div>
       ))}
     </div>
   );
-};
-
-// ─── Sortable Edit Row ────────────────────────────────────────────────────────
+}// ─── Sortable Edit Row ────────────────────────────────────────────────────────
 
 function SortableWidgetRow({
   id,
@@ -232,6 +229,7 @@ function SortableWidgetRow({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  const { formatMoney, currency } = useCurrency();
   const { year, month } = getCurrentMonthYear();
   const [modalOpen, setModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -361,7 +359,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <SummaryCard
           title="Saldo Total"
-          value={formatCurrency(bal)}
+          value={formatMoney(bal)}
           icon={Wallet}
           colorClass={bal >= 0 ? "text-foreground" : "text-expense"}
           bgClass="bg-secondary"
@@ -370,7 +368,7 @@ export default function Dashboard() {
         />
         <SummaryCard
           title="Receitas do Mês"
-          value={formatCurrency(income)}
+          value={formatMoney(income)}
           icon={TrendingUp}
           colorClass="text-income"
           bgClass="bg-income-soft"
@@ -379,7 +377,7 @@ export default function Dashboard() {
         />
         <SummaryCard
           title="Despesas do Mês"
-          value={formatCurrency(expense)}
+          value={formatMoney(expense)}
           icon={TrendingDown}
           colorClass="text-expense"
           bgClass="bg-expense-soft"
@@ -466,7 +464,7 @@ export default function Dashboard() {
                   tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => v >= 1000 ? `R$\u00a0${(v / 1000).toFixed(0)}k` : formatCurrency(v)}
+                  tickFormatter={(v) => v >= 1000 ? `${currency === 'BRL' ? 'R$' : '$'}\u00a0${(v / 1000).toFixed(0)}k` : formatMoney(v)}
                   width={44}
                 />
                 <Tooltip content={<CustomTooltip />} />
@@ -562,7 +560,7 @@ export default function Dashboard() {
                     )}
                   >
                     {tx.type === "income" ? "+" : "-"}
-                    {formatCurrency(tx.amount)}
+                    {formatMoney(tx.amount)}
                   </p>
                 </div>
               ))}
@@ -739,13 +737,13 @@ export default function Dashboard() {
                         <span className="text-muted-foreground">
                           Gasto:{" "}
                           <span className="font-medium text-foreground">
-                            {formatCurrency(parseFloat(goal.spent))}
+                            {formatMoney(parseFloat(goal.spent))}
                           </span>
                         </span>
                         <span className="text-muted-foreground">
                           Limite:{" "}
                           <span className="font-medium text-foreground">
-                            {formatCurrency(parseFloat(goal.targetAmount))}
+                            {formatMoney(parseFloat(goal.targetAmount))}
                           </span>
                         </span>
                         <span
@@ -759,8 +757,8 @@ export default function Dashboard() {
                           )}
                         >
                           {isExceeded
-                            ? `+${formatCurrency(Math.abs(remaining))} acima`
-                            : `${formatCurrency(remaining)} restante`}
+                            ? `+${formatMoney(Math.abs(remaining))} acima`
+                            : `${formatMoney(remaining)} restante`}
                         </span>
                       </div>
                     </div>
