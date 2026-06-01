@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { CATEGORY_ICONS } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -52,6 +53,9 @@ export default function TransactionModal({
   open, onOpenChange, onSuccess, transaction
 }: TransactionModalProps) {
   const isEdit = !!transaction;
+  const { currency } = useCurrency();
+  const currencySymbol = currency === "BRL" ? "R$" : "$";
+  const amountPlaceholder = currency === "BRL" ? "0,00" : "0.00";
   const { data: categories } = trpc.categories.list.useQuery();
 
   const form = useForm<FormValues>({
@@ -180,14 +184,14 @@ export default function TransactionModal({
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor ($)</FormLabel>
+                  <FormLabel>Valor ({currencySymbol})</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">{currencySymbol}</span>
                       <Input
                         {...field}
-                        placeholder="0.00"
-                        className="pl-7"
+                        placeholder={amountPlaceholder}
+                        className="pl-9"
                         inputMode="decimal"
                       />
                     </div>

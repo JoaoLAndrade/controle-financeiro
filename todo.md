@@ -157,3 +157,27 @@
 - [x] Persistir preferência no banco ao trocar
 - [x] Testes vitest para `auth.updateCurrency` (4 testes: BRL, USD, acesso não autenticado, valor inválido) — 46 testes no total
 - [x] Rollback de estado local no CurrencyContext se a mutation falhar (onError com toast)
+
+## Correções do Pente Fino — Rodada 3 (12 achados)
+
+### Bugs P1
+- [x] TransactionModal: símbolo de moeda hardcoded em "$" — usar useCurrency()
+- [x] Recurring.tsx: generateMutation.onSuccess não invalida categoryBreakdown nem goals.list
+- [x] Transactions.tsx: deleteMutation.onSuccess não invalida reports (summary/totalBalance/evolution/breakdown)
+- [x] Transactions.tsx: onSuccess do modal não invalida categoryBreakdown
+- [x] Categories.tsx: update/delete mutations não invalidam transactions.list, categoryBreakdown, goals.list
+
+### Débitos Técnicos
+- [x] lib/format.ts: remover função formatCurrency (código morto)
+- [x] Transactions.tsx: substituir useState<any> por tipo explícito (EditingTransaction)
+- [x] Categories.tsx: substituir useState<any> por tipo explícito (CategoryRow)
+- [x] Recurring.tsx: substituir useState<any> por tipo explícito (EditingRecurring)
+- [x] Transactions.tsx: remover cast (v: any) no onValueChange do Select
+- [x] Dashboard.tsx + Reports.tsx: tipar props any dos tooltips com TooltipProps do Recharts
+- [x] auth.currency.test.ts: assert de chamada ao helper, teste de falha, beforeEach com clearAllMocks
+- [x] main.tsx: remover console.error global duplicado, manter apenas redirecionamento UNAUTHORIZED
+
+### Otimizações
+- [x] server/db.ts getMonthlyEvolution: agregar no SQL com YEAR/MONTH + GROUP BY (sem carregar linhas em memória)
+- [x] server/db.ts getTransactions: limite máximo de 500 registros adicionado
+- [x] server/db.ts getGoalsWithProgress: mapa de lookup em pass única com CAST(SUM) no SQL

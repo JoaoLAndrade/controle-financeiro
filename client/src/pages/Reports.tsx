@@ -13,30 +13,41 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  type TooltipProps,
 } from "recharts";
+import type { PieLabelRenderProps } from "recharts";
 
 const RADIAN = Math.PI / 180;
-const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-  if (percent < 0.05) return null;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: PieLabelRenderProps) => {
+  const _cx = Number(cx ?? 0);
+  const _cy = Number(cy ?? 0);
+  const _midAngle = Number(midAngle ?? 0);
+  const _innerRadius = Number(innerRadius ?? 0);
+  const _outerRadius = Number(outerRadius ?? 0);
+  const _percent = Number(percent ?? 0);
+  if (_percent < 0.05) return null;
+  const radius = _innerRadius + (_outerRadius - _innerRadius) * 0.5;
+  const x = _cx + radius * Math.cos(-_midAngle * RADIAN);
+  const y = _cy + radius * Math.sin(-_midAngle * RADIAN);
   return (
     <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
-      {`${(percent * 100).toFixed(0)}%`}
+      {`${(_percent * 100).toFixed(0)}%`}
     </text>
   );
 };
 
-function CustomPieTooltip({ active, payload }: any) {
+function CustomPieTooltip({ active, payload }: TooltipProps<number, string>) {
   const { formatMoney } = useCurrency();
   if (!active || !payload?.length) return null;
-  const { name, value, payload: p } = payload[0];
+  const entry = payload[0];
+  const name = entry.name;
+  const value = entry.value ?? 0;
+  const color = (entry.payload as { color?: string })?.color;
   return (
     <div className="bg-card border border-border rounded-xl p-3 shadow-lg text-xs">
       <div className="flex items-center gap-2 mb-1">
-        <div className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }} />
+        <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
         <span className="font-medium text-foreground">{name}</span>
       </div>
       <p className="text-muted-foreground">{formatMoney(value)}</p>
@@ -44,17 +55,17 @@ function CustomPieTooltip({ active, payload }: any) {
   );
 }
 
-function CustomBarTooltip({ active, payload, label }: any) {
+function CustomBarTooltip({ active, payload, label }: TooltipProps<number, string>) {
   const { formatMoney } = useCurrency();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-xl p-3 shadow-lg text-xs">
       <p className="font-medium text-foreground mb-2">{label}</p>
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: entry.fill }} />
           <span className="text-muted-foreground">{entry.name}:</span>
-          <span className="font-medium text-foreground">{formatMoney(entry.value)}</span>
+          <span className="font-medium text-foreground">{formatMoney(entry.value ?? 0)}</span>
         </div>
       ))}
     </div>

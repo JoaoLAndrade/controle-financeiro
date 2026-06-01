@@ -25,6 +25,15 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import TransactionModal from "@/components/TransactionModal";
 
+type EditingTransaction = {
+  id: number;
+  type: "income" | "expense";
+  amount: string;
+  date: Date;
+  description: string;
+  categoryId: number | null;
+};
+
 export default function Transactions() {
   const { formatMoney } = useCurrency();
   const now = new Date();
@@ -34,7 +43,7 @@ export default function Transactions() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingTx, setEditingTx] = useState<any>(null);
+  const [editingTx, setEditingTx] = useState<EditingTransaction | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const startDate = useMemo(() => new Date(year, month - 1, 1), [year, month]);
@@ -53,6 +62,10 @@ export default function Transactions() {
       toast.success("Transação excluída.");
       setDeletingId(null);
       refetch();
+      utils.reports.summary.invalidate();
+      utils.reports.totalBalance.invalidate();
+      utils.reports.monthlyEvolution.invalidate();
+      utils.reports.categoryBreakdown.invalidate();
       utils.goals.list.invalidate();
     },
     onError: (e) => toast.error(`Erro: ${e.message}`),
@@ -64,6 +77,7 @@ export default function Transactions() {
     utils.reports.summary.invalidate();
     utils.reports.totalBalance.invalidate();
     utils.reports.monthlyEvolution.invalidate();
+    utils.reports.categoryBreakdown.invalidate();
     utils.goals.list.invalidate();
   };
 
@@ -130,7 +144,7 @@ export default function Transactions() {
             </Select>
 
             {/* Type */}
-            <Select value={typeFilter} onValueChange={(v: any) => setTypeFilter(v)}>
+            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as "all" | "income" | "expense")}>
               <SelectTrigger className="h-8 w-32 text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -321,7 +335,7 @@ export default function Transactions() {
         open={modalOpen}
         onOpenChange={(open) => { setModalOpen(open); if (!open) setEditingTx(null); }}
         onSuccess={onSuccess}
-        transaction={editingTx}
+        transaction={editingTx ?? undefined}
       />
 
       <AlertDialog open={deletingId !== null} onOpenChange={(o) => !o && setDeletingId(null)}>

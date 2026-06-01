@@ -206,7 +206,8 @@ export async function getTransactions(
       and(eq(transactions.categoryId, categories.id), eq(categories.userId, filters.userId))
     )
     .where(and(...conditions))
-    .orderBy(desc(transactions.date));
+    .orderBy(desc(transactions.date))
+    .limit(500); // Safety cap: prevents oversized payloads for high-volume months
 
   return rows;
 }
@@ -282,29 +283,23 @@ export async function getMonthlyEvolution(userId: number, months: number = 6) {
   startDate.setDate(1);
   startDate.setHours(0, 0, 0, 0);
 
-  // Fetch raw rows and aggregate by month in JS to avoid DATE_FORMAT issues in Drizzle GROUP BY
+  // Aggregate directly in SQL using YEAR/MONTH to avoid loading all rows into memory
   const rows = await db
     .select({
       type: transactions.type,
-      date: transactions.date,
-      amount: transactions.amount,
+      year: sql<number>`YEAR(${transactions.date})`,
+      month: sql<number>`MONTH(${transactions.date})`,
+      total: sql<string>`CAST(SUM(${transactions.amount}) AS CHAR)`,
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, userId), gte(transactions.date, startDate)));
+    .where(and(eq(transactions.userId, userId), gte(transactions.date, startDate)))
+    .groupBy(transactions.type, sql`YEAR(${transactions.date})`, sql`MONTH(${transactions.date})`);
 
-  const map = new Map<string, { type: string; month: string; total: number }>();
-  for (const row of rows) {
-    const d = new Date(row.date);
-    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const key = `${monthKey}-${row.type}`;
-    if (!map.has(key)) map.set(key, { type: row.type, month: monthKey, total: 0 });
-    map.get(key)!.total += parseFloat(row.amount);
-  }
-  return Array.from(map.values())
+  return rows
     .map((r) => ({
       type: r.type as "income" | "expense",
-      month: r.month,
-      total: r.total.toFixed(2),
+      month: `${r.year}-${String(r.month).padStart(2, "0")}`,
+      total: parseFloat(r.total ?? "0").toFixed(2),
     }))
     .sort((a, b) => a.month.localeCompare(b.month));
 }
@@ -547,12 +542,12 @@ export async function getGoalsWithProgress(
 
   if (goalsRows.length === 0) return [];
 
-  // Fetch spending per category for the month
+  // Single query: aggregate spending per (categoryId, type) for the month
   const spendingRows = await db
     .select({
       categoryId: transactions.categoryId,
       type: transactions.type,
-      total: sql<string>`SUM(${transactions.amount})`,
+      total: sql<string>`CAST(SUM(${transactions.amount}) AS CHAR)`,
     })
     .from(transactions)
     .where(
@@ -564,29 +559,19 @@ export async function getGoalsWithProgress(
     )
     .groupBy(transactions.categoryId, transactions.type);
 
-  // Build a map: categoryId+type -> total
+  // Build lookup maps in a single pass
   const spendingMap = new Map<string, number>();
-  for (const row of spendingRows) {
-    const key = `${row.categoryId ?? "null"}-${row.type}`;
-    spendingMap.set(key, parseFloat(row.total ?? "0"));
-  }
-
-  // Build total per type (for goals without a specific category)
   const totalByType = new Map<string, number>();
   for (const row of spendingRows) {
-    const prev = totalByType.get(row.type) ?? 0;
-    totalByType.set(row.type, prev + parseFloat(row.total ?? "0"));
+    const amount = parseFloat(row.total ?? "0");
+    spendingMap.set(`${row.categoryId ?? "null"}-${row.type}`, amount);
+    totalByType.set(row.type, (totalByType.get(row.type) ?? 0) + amount);
   }
 
   return goalsRows.map((g) => {
-    let spent: number;
-    if (g.categoryId === null) {
-      // No specific category: track total spending of this type
-      spent = totalByType.get(g.type) ?? 0;
-    } else {
-      const key = `${g.categoryId}-${g.type}`;
-      spent = spendingMap.get(key) ?? 0;
-    }
+    const spent = g.categoryId === null
+      ? (totalByType.get(g.type) ?? 0)
+      : (spendingMap.get(`${g.categoryId}-${g.type}`) ?? 0);
     const target = parseFloat(g.targetAmount);
     const percentage = target > 0 ? Math.round((spent / target) * 100) : 0;
     return {

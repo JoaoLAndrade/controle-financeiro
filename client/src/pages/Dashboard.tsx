@@ -39,6 +39,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  type TooltipProps,
 } from "recharts";
 import { useMemo, useState } from "react";
 import TransactionModal from "@/components/TransactionModal";
@@ -128,13 +129,13 @@ function SummaryCard({
   );
 }// ─── Custom Tooltip ───────────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   const { formatMoney } = useCurrency();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-xl p-3 shadow-lg text-xs">
       <p className="font-medium text-foreground mb-2">{label}</p>
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2">
           <div
             className="w-2 h-2 rounded-full"
@@ -142,7 +143,7 @@ function CustomTooltip({ active, payload, label }: any) {
           />
           <span className="text-muted-foreground">{entry.name}:</span>
           <span className="font-medium text-foreground">
-            {formatMoney(entry.value)}
+            {formatMoney(entry.value ?? 0)}
           </span>
         </div>
       ))}

@@ -1,20 +1,3 @@
-export function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return "R$\u00a00,00";
-  let num: number;
-  if (typeof value === "string") {
-    // DB stores values with dot as decimal separator (e.g. "1500.50")
-    num = parseFloat(value);
-  } else {
-    num = value;
-  }
-  if (isNaN(num)) return "R$\u00a00,00";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-  }).format(num);
-}
-
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("pt-BR", {

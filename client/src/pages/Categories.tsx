@@ -54,11 +54,14 @@ function CategoryIcon({ icon, color, size = 16 }: { icon: string; color: string;
   return <IconComponent style={{ color, width: size, height: size }} />;
 }
 
+type CategoryRow = { id: number; name: string; color: string; icon: string; type: "income" | "expense" | "both" };
+
 export default function Categories() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingCat, setEditingCat] = useState<any>(null);
+  const [editingCat, setEditingCat] = useState<CategoryRow | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  const utils = trpc.useUtils();
   const { data: categories, isLoading, refetch } = trpc.categories.list.useQuery();
 
   const form = useForm<FormValues>({
@@ -86,13 +89,19 @@ export default function Categories() {
     onError: (e) => toast.error(`Erro: ${e.message}`),
   });
 
+  const invalidateDependents = () => {
+    utils.transactions.list.invalidate();
+    utils.reports.categoryBreakdown.invalidate();
+    utils.goals.list.invalidate();
+  };
+
   const updateMutation = trpc.categories.update.useMutation({
-    onSuccess: () => { toast.success("Categoria atualizada!"); setModalOpen(false); refetch(); },
+    onSuccess: () => { toast.success("Categoria atualizada!"); setModalOpen(false); refetch(); invalidateDependents(); },
     onError: (e) => toast.error(`Erro: ${e.message}`),
   });
 
   const deleteMutation = trpc.categories.delete.useMutation({
-    onSuccess: () => { toast.success("Categoria excluída."); setDeletingId(null); refetch(); },
+    onSuccess: () => { toast.success("Categoria excluída."); setDeletingId(null); refetch(); invalidateDependents(); },
     onError: (e) => toast.error(`Erro: ${e.message}`),
   });
 

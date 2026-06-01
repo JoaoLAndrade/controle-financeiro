@@ -47,10 +47,20 @@ type FormValues = z.infer<typeof schema>;
 
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => i + 1);
 
+type EditingRecurring = {
+  id: number;
+  name: string;
+  amount: string;
+  type: "income" | "expense";
+  categoryId: number | null;
+  dayOfMonth: number;
+  active: "yes" | "no";
+};
+
 export default function Recurring() {
   const { formatMoney } = useCurrency();
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingRec, setEditingRec] = useState<any>(null);
+  const [editingRec, setEditingRec] = useState<EditingRecurring | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const { data: recurring, isLoading, refetch } = trpc.recurring.list.useQuery();
@@ -67,6 +77,8 @@ export default function Recurring() {
         utils.reports.totalBalance.invalidate();
         utils.reports.summary.invalidate();
         utils.reports.monthlyEvolution.invalidate();
+        utils.reports.categoryBreakdown.invalidate();
+        utils.goals.list.invalidate();
       } else {
         toast.info("Nenhuma nova transação para gerar este mês.");
       }
