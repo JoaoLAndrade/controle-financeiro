@@ -302,13 +302,12 @@ export async function getMonthlyEvolution(userId: number, months: number = 6) {
   startDate.setDate(1);
   startDate.setHours(0, 0, 0, 0);
 
-  // Aggregate directly in SQL using YEAR/MONTH to avoid loading all rows into memory
+  // Aggregate directly in SQL using DATE_FORMAT to get YYYY-MM as a single string
   // Transfers are excluded — they don't affect income/expense evolution
   const rows = await db
     .select({
       type: transactions.type,
-      year: sql<number>`YEAR(${transactions.date})`,
-      month: sql<number>`MONTH(${transactions.date})`,
+      monthKey: sql<string>`DATE_FORMAT(${transactions.date}, '%Y-%m')`,
       total: sql<string>`CAST(SUM(${transactions.amount}) AS CHAR)`,
     })
     .from(transactions)
@@ -317,12 +316,12 @@ export async function getMonthlyEvolution(userId: number, months: number = 6) {
       gte(transactions.date, startDate),
       ne(transactions.type, "transfer")
     ))
-    .groupBy(transactions.type, sql`YEAR(${transactions.date})`, sql`MONTH(${transactions.date})`);
+    .groupBy(transactions.type, sql`DATE_FORMAT(${transactions.date}, '%Y-%m')`);
 
   return rows
     .map((r) => ({
       type: r.type as "income" | "expense",
-      month: `${r.year}-${String(r.month).padStart(2, "0")}`,
+      month: r.monthKey ?? "",
       total: parseFloat(r.total ?? "0").toFixed(2),
     }))
     .sort((a, b) => a.month.localeCompare(b.month));
