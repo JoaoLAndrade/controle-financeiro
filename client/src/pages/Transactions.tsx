@@ -3,7 +3,7 @@ import { formatDate, MONTH_NAMES } from "@/lib/format";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import {
-  ArrowDownRight, ArrowUpRight, CalendarClock, Filter, Loader2, MoreHorizontal,
+  ArrowDownRight, ArrowLeftRight, ArrowUpRight, CalendarClock, Filter, Loader2, MoreHorizontal,
   Pencil, Plus, Search, Trash2, X
 } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -27,7 +27,7 @@ import TransactionModal from "@/components/TransactionModal";
 
 type EditingTransaction = {
   id: number;
-  type: "income" | "expense";
+  type: "income" | "expense" | "transfer";
   amount: string;
   date: Date;
   description: string;
@@ -39,7 +39,7 @@ export default function Transactions() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense" | "transfer">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -53,7 +53,7 @@ export default function Transactions() {
   const { data: transactions, isLoading, isError, refetch } = trpc.transactions.list.useQuery({
     startDate,
     endDate,
-    type: typeFilter === "all" ? undefined : typeFilter,
+    type: typeFilter === "all" ? undefined : typeFilter as "income" | "expense" | "transfer",
     categoryId: categoryFilter !== "all" ? parseInt(categoryFilter) : undefined,
   });
 
@@ -94,6 +94,7 @@ export default function Transactions() {
 
   const totalIncome = filtered.filter((t) => t.type === "income").reduce((s, t) => s + parseFloat(t.amount), 0);
   const totalExpense = filtered.filter((t) => t.type === "expense").reduce((s, t) => s + parseFloat(t.amount), 0);
+  const totalTransfer = filtered.filter((t) => t.type === "transfer").reduce((s, t) => s + parseFloat(t.amount), 0);
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
 
@@ -144,14 +145,15 @@ export default function Transactions() {
             </Select>
 
             {/* Type */}
-            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as "all" | "income" | "expense")}>
-              <SelectTrigger className="h-8 w-32 text-xs">
+            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as "all" | "income" | "expense" | "transfer")}>
+              <SelectTrigger className="h-8 w-36 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="income">Receitas</SelectItem>
                 <SelectItem value="expense">Despesas</SelectItem>
+                <SelectItem value="transfer">Transferências</SelectItem>
               </SelectContent>
             </Select>
 
@@ -211,6 +213,13 @@ export default function Transactions() {
             <span className="text-muted-foreground">Despesas:</span>
             <span className="font-semibold text-expense">{formatMoney(totalExpense)}</span>
           </div>
+          {totalTransfer > 0 && (
+            <div className="flex items-center gap-1.5 text-sm">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-muted-foreground">Transferências:</span>
+              <span className="font-semibold text-blue-500">{formatMoney(totalTransfer)}</span>
+            </div>
+          )}
           <div className="flex items-center gap-1.5 text-sm">
             <span className="text-muted-foreground">Saldo:</span>
             <span className={cn("font-semibold", totalIncome - totalExpense >= 0 ? "text-income" : "text-expense")}>
@@ -259,10 +268,12 @@ export default function Transactions() {
                 {/* Icon */}
                 <div className={cn(
                   "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0",
-                  tx.type === "income" ? "bg-income-soft" : "bg-expense-soft"
+                  tx.type === "income" ? "bg-income-soft" : tx.type === "transfer" ? "bg-blue-100 dark:bg-blue-900/30" : "bg-expense-soft"
                 )}>
                   {tx.type === "income"
                     ? <ArrowUpRight className="w-4 h-4 text-income" />
+                    : tx.type === "transfer"
+                    ? <ArrowLeftRight className="w-4 h-4 text-blue-500" />
                     : <ArrowDownRight className="w-4 h-4 text-expense" />
                   }
                 </div>
@@ -293,9 +304,9 @@ export default function Transactions() {
                 {/* Amount */}
                 <p className={cn(
                   "text-sm font-semibold flex-shrink-0",
-                  tx.type === "income" ? "text-income" : "text-expense"
+                  tx.type === "income" ? "text-income" : tx.type === "transfer" ? "text-blue-500" : "text-expense"
                 )}>
-                  {tx.type === "income" ? "+" : "-"}{formatMoney(parseFloat(tx.amount))}
+                  {tx.type === "income" ? "+" : tx.type === "transfer" ? "" : "-"}{formatMoney(parseFloat(tx.amount))}
                 </p>
 
                 {/* Actions */}

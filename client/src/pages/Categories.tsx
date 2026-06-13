@@ -34,7 +34,7 @@ const schema = z.object({
   name: z.string().min(1, "Informe o nome").max(100),
   color: z.string().min(1, "Selecione uma cor"),
   icon: z.string().min(1, "Selecione um ícone"),
-  type: z.enum(["income", "expense", "both"]),
+  type: z.enum(["income", "expense", "both", "transfer"]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -43,6 +43,7 @@ const TYPE_LABELS = {
   income: "Receita",
   expense: "Despesa",
   both: "Ambos",
+  transfer: "Transferência",
 };
 
 function CategoryIcon({ icon, color, size = 16 }: { icon: string; color: string; size?: number }) {
@@ -54,7 +55,7 @@ function CategoryIcon({ icon, color, size = 16 }: { icon: string; color: string;
   return <IconComponent style={{ color, width: size, height: size }} />;
 }
 
-type CategoryRow = { id: number; name: string; color: string; icon: string; type: "income" | "expense" | "both" };
+type CategoryRow = { id: number; name: string; color: string; icon: string; type: "income" | "expense" | "both" | "transfer" };
 
 export default function Categories() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -262,6 +263,11 @@ export default function Categories() {
                         <SelectItem value="expense">
                           <div className="flex items-center gap-2">
                             <TrendingDown className="w-3.5 h-3.5 text-expense" /> Despesa
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="transfer">
+                          <div className="flex items-center gap-2">
+                            <ArrowLeftRight className="w-3.5 h-3.5 text-blue-500" /> Transferência Interna
                           </div>
                         </SelectItem>
                       </SelectContent>

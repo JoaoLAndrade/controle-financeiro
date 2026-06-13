@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO categories (userId, name, color, icon, type)\nSELECT 1, 'Transferência Interna', '#3b82f6', 'arrow-left-right', 'transfer'\nWHERE NOT EXISTS (\n  SELECT 1 FROM categories WHERE userId = 1 AND type = 'transfer' AND name = 'Transferência Interna'\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute INSERT INTO categories (userId, name, color, icon, type)\nSELECT 1, 'Transferência Interna', '#3b82f6', 'arrow-left-right', 'transfer'\nWHERE NOT EXISTS (\n  SELECT 1 FROM categories WHERE userId = 1 AND type = 'transfer' AND name = 'Transferência Interna'\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 272
+}

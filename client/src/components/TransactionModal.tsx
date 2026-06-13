@@ -26,7 +26,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const schema = z.object({
-  type: z.enum(["income", "expense"]),
+  type: z.enum(["income", "expense", "transfer"]),
   amount: z.string().min(1, "Informe o valor").regex(/^\d+([.,]\d{1,2})?$/, "Valor inválido"),
   date: z.date().refine((d) => !!d, { message: "Informe a data" }),
   description: z.string().min(1, "Informe a descrição").max(255),
@@ -41,7 +41,7 @@ interface TransactionModalProps {
   onSuccess?: () => void;
   transaction?: {
     id: number;
-    type: "income" | "expense";
+    type: "income" | "expense" | "transfer";
     amount: string;
     date: Date;
     description: string;
@@ -138,7 +138,7 @@ export default function TransactionModal({
 
   const selectedType = form.watch("type");
   const filteredCategories = categories?.filter(
-    (c) => c.type === selectedType || c.type === "both"
+    (c) => c.type === selectedType || c.type === "both" || (selectedType === "transfer" && c.type === "transfer")
   ) ?? [];
 
   return (
@@ -171,6 +171,9 @@ export default function TransactionModal({
                       </TabsTrigger>
                       <TabsTrigger value="income" className="flex-1 text-sm data-[state=active]:bg-income data-[state=active]:text-white">
                         Receita
+                      </TabsTrigger>
+                      <TabsTrigger value="transfer" className="flex-1 text-sm data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+                        Transferência
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>

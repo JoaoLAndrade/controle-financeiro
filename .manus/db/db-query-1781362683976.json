@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, userId, name, color, icon, type FROM categories WHERE type = 'transfer';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24QshLSqN1EE5J6.eabae9e6e787 --database RQcPXrGoewsa5kXKfjXxsp --execute SELECT id, userId, name, color, icon, type FROM categories WHERE type = 'transfer';",
+  "rows": [
+    {
+      "id": "210001",
+      "userId": "1",
+      "name": "Transferência Interna",
+      "color": "#3b82f6",
+      "icon": "arrow-left-right",
+      "type": "transfer"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tname\tcolor\ticon\ttype\n210001\t1\tTransferência Interna\t#3b82f6\tarrow-left-right\ttransfer\n",
+  "stderr": "",
+  "execution_time_ms": 273
+}

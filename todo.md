@@ -181,3 +181,20 @@
 - [x] server/db.ts getMonthlyEvolution: agregar no SQL com YEAR/MONTH + GROUP BY (sem carregar linhas em memória)
 - [x] server/db.ts getTransactions: limite máximo de 500 registros adicionado
 - [x] server/db.ts getGoalsWithProgress: mapa de lookup em pass única com CAST(SUM) no SQL
+
+## Transferência Interna (tipo "transfer")
+
+- [x] Schema: adicionar "transfer" ao enum de type em transactions e recurringTransactions
+- [x] Schema: adicionar "transfer" ao enum de type em categories
+- [x] Migração SQL: ALTER TABLE para ampliar os enums
+- [x] Criar categoria "Transferência Interna" padrão via SQL (sem apagar dados existentes)
+- [x] db.ts getTotalBalance: excluir type="transfer" do cálculo de saldo
+- [x] db.ts getMonthlySummary: excluir type="transfer" de receitas e despesas
+- [x] db.ts getMonthlyEvolution: excluir type="transfer" da evolução mensal
+- [x] db.ts getCategoryBreakdown: incluir type="transfer" no relatório de categorias (seção separada)
+- [x] routers.ts: aceitar type="transfer" em create/update de transactions e recurring
+- [x] TransactionModal: adicionar aba "Transferência" no toggle de tipo
+- [x] Transactions.tsx: exibir ícone/cor neutros (azul) para type="transfer"
+- [x] Recurring.tsx: exibir ícone/cor neutros para type="transfer"; excluir do impacto mensal
+- [x] Dashboard.tsx: widget de recentes com ícone/cor neutros para transferências
+- [x] Reports.tsx: seção "Transferências Internas por Categoria" (só exibida quando houver dados)

@@ -4,7 +4,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ArrowDownRight, ArrowUpRight, CalendarClock, Loader2,
+  ArrowDownRight, ArrowLeftRight, ArrowUpRight, CalendarClock, Loader2,
   MoreHorizontal, Pencil, Plus, RefreshCw, Trash2, ToggleLeft, ToggleRight
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -38,7 +38,7 @@ import { Switch } from "@/components/ui/switch";
 const schema = z.object({
   name: z.string().min(1, "Informe o nome").max(255),
   amount: z.string().min(1, "Informe o valor").regex(/^\d+([.,]\d{1,2})?$/, "Valor inválido"),
-  type: z.enum(["income", "expense"]),
+  type: z.enum(["income", "expense", "transfer"]),
   categoryId: z.string().optional(),
   dayOfMonth: z.coerce.number().min(1, "Mínimo 1").max(31, "Máximo 31"),
 });
@@ -51,14 +51,15 @@ type EditingRecurring = {
   id: number;
   name: string;
   amount: string;
-  type: "income" | "expense";
+  type: "income" | "expense" | "transfer";
   categoryId: number | null;
   dayOfMonth: number;
   active: "yes" | "no";
 };
 
 export default function Recurring() {
-  const { formatMoney } = useCurrency();
+  const { formatMoney, currency } = useCurrency();
+  const currencySymbol = currency === "BRL" ? "R$" : "$";
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRec, setEditingRec] = useState<EditingRecurring | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -142,11 +143,14 @@ export default function Recurring() {
   };
 
   const selectedType = form.watch("type");
-  const filteredCategories = categories?.filter((c) => c.type === selectedType || c.type === "both") ?? [];
+  const filteredCategories = categories?.filter(
+    (c) => c.type === selectedType || c.type === "both" || (selectedType === "transfer" && c.type === "transfer")
+  ) ?? [];
 
   const activeCount = recurring?.filter((r) => r.active === "yes").length ?? 0;
+  // Transfers are excluded from the monthly impact calculation — they are neutral
   const totalMonthly = recurring
-    ?.filter((r) => r.active === "yes")
+    ?.filter((r) => r.active === "yes" && r.type !== "transfer")
     .reduce((sum, r) => {
       const v = parseFloat(r.amount);
       return r.type === "income" ? sum + v : sum - v;
@@ -267,10 +271,12 @@ export default function Recurring() {
                 {/* Icon */}
                 <div className={cn(
                   "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0",
-                  rec.type === "income" ? "bg-income-soft" : "bg-expense-soft"
+                  rec.type === "income" ? "bg-income-soft" : rec.type === "transfer" ? "bg-blue-100 dark:bg-blue-900/30" : "bg-expense-soft"
                 )}>
                   {rec.type === "income"
                     ? <ArrowUpRight className="w-4 h-4 text-income" />
+                    : rec.type === "transfer"
+                    ? <ArrowLeftRight className="w-4 h-4 text-blue-500" />
                     : <ArrowDownRight className="w-4 h-4 text-expense" />
                   }
                 </div>
@@ -303,9 +309,9 @@ export default function Recurring() {
                 {/* Amount */}
                 <p className={cn(
                   "text-sm font-semibold flex-shrink-0",
-                  rec.type === "income" ? "text-income" : "text-expense"
+                  rec.type === "income" ? "text-income" : rec.type === "transfer" ? "text-blue-500" : "text-expense"
                 )}>
-                  {rec.type === "income" ? "+" : "-"}{formatMoney(parseFloat(rec.amount))}
+                  {rec.type === "income" ? "+" : rec.type === "transfer" ? "" : "-"}{formatMoney(parseFloat(rec.amount))}
                 </p>
 
                 {/* Toggle active */}
@@ -379,6 +385,9 @@ export default function Recurring() {
                         <TabsTrigger value="income" className="flex-1 text-sm data-[state=active]:bg-income data-[state=active]:text-white">
                           Receita
                         </TabsTrigger>
+                        <TabsTrigger value="transfer" className="flex-1 text-sm data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+                          Transferência
+                        </TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </FormItem>
@@ -406,10 +415,10 @@ export default function Recurring() {
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor ($)</FormLabel>
-                    <FormControl>
+                    <FormLabel>Valor ({currencySymbol})</FormLabel>
+                  <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">{currencySymbol}</span>
                         <Input {...field} placeholder="0.00" className="pl-7" inputMode="decimal" />
                       </div>
                     </FormControl>

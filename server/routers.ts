@@ -45,7 +45,7 @@ const categoriesRouter = router({
         name: z.string().min(1).max(100),
         color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default("#6366f1"),
         icon: z.string().default("tag"),
-        type: z.enum(["income", "expense", "both"]).default("both"),
+        type: z.enum(["income", "expense", "both", "transfer"]).default("both"),
       })
     )
     .mutation(({ ctx, input }) =>
@@ -59,7 +59,7 @@ const categoriesRouter = router({
         name: z.string().min(1).max(100).optional(),
         color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
         icon: z.string().optional(),
-        type: z.enum(["income", "expense", "both"]).optional(),
+        type: z.enum(["income", "expense", "both", "transfer"]).optional(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -80,7 +80,7 @@ const transactionsRouter = router({
       z.object({
         startDate: z.date().optional(),
         endDate: z.date().optional(),
-        type: z.enum(["income", "expense"]).optional(),
+        type: z.enum(["income", "expense", "transfer"]).optional(),
         categoryId: z.number().optional(),
       }).optional()
     )
@@ -95,7 +95,7 @@ const transactionsRouter = router({
         date: z.date(),
         description: z.string().min(1).max(255),
         categoryId: z.number().nullable().optional(),
-        type: z.enum(["income", "expense"]),
+        type: z.enum(["income", "expense", "transfer"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -118,7 +118,7 @@ const transactionsRouter = router({
         date: z.date().optional(),
         description: z.string().min(1).max(255).optional(),
         categoryId: z.number().nullable().optional(),
-        type: z.enum(["income", "expense"]).optional(),
+        type: z.enum(["income", "expense", "transfer"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -167,7 +167,7 @@ const recurringRouter = router({
       z.object({
         name: z.string().min(1).max(255),
         amount: z.string().regex(/^\d+(\.\d{1,2})?$/).refine((v) => parseFloat(v) > 0, { message: "Valor deve ser maior que zero" }),
-        type: z.enum(["income", "expense"]),
+        type: z.enum(["income", "expense", "transfer"]),
         categoryId: z.number().nullable().optional(),
         dayOfMonth: z.number().min(1).max(31).default(1),
       })
@@ -191,7 +191,7 @@ const recurringRouter = router({
         id: z.number(),
         name: z.string().min(1).max(255).optional(),
         amount: z.string().regex(/^\d+(\.\d{1,2})?$/).refine((v) => parseFloat(v) > 0, { message: "Valor deve ser maior que zero" }).optional(),
-        type: z.enum(["income", "expense"]).optional(),
+        type: z.enum(["income", "expense", "transfer"]).optional(),
         categoryId: z.number().nullable().optional(),
         dayOfMonth: z.number().min(1).max(31).optional(),
         active: z.enum(["yes", "no"]).optional(),

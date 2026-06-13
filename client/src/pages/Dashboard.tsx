@@ -537,11 +537,13 @@ export default function Dashboard() {
                   <div
                     className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-                      tx.type === "income" ? "bg-income-soft" : "bg-expense-soft"
+                      tx.type === "income" ? "bg-income-soft" : tx.type === "transfer" ? "bg-blue-100 dark:bg-blue-900/30" : "bg-expense-soft"
                     )}
                   >
                     {tx.type === "income" ? (
                       <ArrowUpRight className="w-3.5 h-3.5 text-income" />
+                    ) : tx.type === "transfer" ? (
+                      <ArrowLeftRight className="w-3.5 h-3.5 text-blue-500" />
                     ) : (
                       <ArrowDownRight className="w-3.5 h-3.5 text-expense" />
                     )}
@@ -557,10 +559,10 @@ export default function Dashboard() {
                   <p
                     className={cn(
                       "text-sm font-semibold flex-shrink-0",
-                      tx.type === "income" ? "text-income" : "text-expense"
+                      tx.type === "income" ? "text-income" : tx.type === "transfer" ? "text-blue-500" : "text-expense"
                     )}
                   >
-                    {tx.type === "income" ? "+" : "-"}
+                    {tx.type === "income" ? "+" : tx.type === "transfer" ? "" : "-"}
                     {formatMoney(tx.amount)}
                   </p>
                 </div>

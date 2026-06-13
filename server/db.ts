@@ -69,7 +69,25 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
+  // Check if this is a new user (no existing record)
+  const existing = await db.select({ id: users.id }).from(users).where(eq(users.openId, user.openId)).limit(1);
+  const isNewUser = existing.length === 0;
+
   await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+
+  // Seed default "Transferência Interna" category for new users
+  if (isNewUser) {
+    const [newUser] = await db.select({ id: users.id }).from(users).where(eq(users.openId, user.openId)).limit(1);
+    if (newUser) {
+      await db.insert(categories).values({
+        userId: newUser.id,
+        name: "Transferência Interna",
+        color: "#3b82f6",
+        icon: "arrow-left-right",
+        type: "transfer",
+      });
+    }
+  }
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -164,7 +182,7 @@ export interface TransactionFilters {
   userId: number;
   startDate?: Date;
   endDate?: Date;
-  type?: "income" | "expense";
+  type?: "income" | "expense" | "transfer";
   categoryId?: number;
 }
 
@@ -264,7 +282,8 @@ export async function getMonthlySummary(userId: number, year: number, month: num
       and(
         eq(transactions.userId, userId),
         gte(transactions.date, startDate),
-        lte(transactions.date, endDate)
+        lte(transactions.date, endDate),
+        sql`${transactions.type} != 'transfer'` // transfers don't affect income/expense summary
       )
     )
     .groupBy(transactions.type);
@@ -284,6 +303,7 @@ export async function getMonthlyEvolution(userId: number, months: number = 6) {
   startDate.setHours(0, 0, 0, 0);
 
   // Aggregate directly in SQL using YEAR/MONTH to avoid loading all rows into memory
+  // Transfers are excluded — they don't affect income/expense evolution
   const rows = await db
     .select({
       type: transactions.type,
@@ -292,7 +312,11 @@ export async function getMonthlyEvolution(userId: number, months: number = 6) {
       total: sql<string>`CAST(SUM(${transactions.amount}) AS CHAR)`,
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, userId), gte(transactions.date, startDate)))
+    .where(and(
+      eq(transactions.userId, userId),
+      gte(transactions.date, startDate),
+      sql`${transactions.type} != 'transfer'`
+    ))
     .groupBy(transactions.type, sql`YEAR(${transactions.date})`, sql`MONTH(${transactions.date})`);
 
   return rows
@@ -734,9 +758,8 @@ export async function getTotalBalance(userId: number) {
       total: sql<string>`SUM(${transactions.amount})`,
     })
     .from(transactions)
-    .where(eq(transactions.userId, userId))
-    .groupBy(transactions.type);
-
+   .where(and(eq(transactions.userId, userId), sql`${transactions.type} != 'transfer'`))
+    .groupBy(transactions.type);// Transfers are excluded from balance calculation — they are neutral movements between accounts
   const income = parseFloat(rows.find((r) => r.type === "income")?.total ?? "0");
   const expense = parseFloat(rows.find((r) => r.type === "expense")?.total ?? "0");
   return (income - expense).toFixed(2);

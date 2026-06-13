@@ -113,6 +113,19 @@ export default function Reports() {
       .filter((r) => r.value > 0);
   }, [breakdown]);
 
+  // Pie chart data for transfers by category
+  const transferPieData = useMemo(() => {
+    if (!breakdown) return [];
+    return breakdown
+      .filter((r) => r.type === "transfer")
+      .map((r) => ({
+        name: r.categoryName ?? "Sem categoria",
+        value: parseFloat(r.total ?? "0"),
+        color: r.categoryColor ?? "#3b82f6",
+      }))
+      .filter((r) => r.value > 0);
+  }, [breakdown]);
+
   // Bar chart data for evolution — always show 12 months even without transactions
   const barData = useMemo(() => {
     const skeleton = new Map<string, { month: string; Receitas: number; Despesas: number }>();
@@ -339,6 +352,62 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Transfers by category — only shown when there are transfers */}
+      {(breakdownLoading || transferPieData.length > 0) && (
+        <Card className="card-shadow border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <ArrowLeftRight className="w-4 h-4 text-blue-500" />
+              Transferências Internas por Categoria
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {breakdownLoading ? (
+              <Skeleton className="h-40 w-full rounded-lg" />
+            ) : (
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie
+                      data={transferPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={75}
+                      paddingAngle={2}
+                      dataKey="value"
+                      labelLine={false}
+                      label={renderCustomLabel}
+                    >
+                      {transferPieData.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomPieTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="space-y-2">
+                  {transferPieData.map((entry) => (
+                    <div key={entry.name} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: entry.color }} />
+                        <span className="text-muted-foreground truncate">{entry.name}</span>
+                      </div>
+                      <span className="font-medium text-blue-500 flex-shrink-0 ml-2">
+                        {formatMoney(entry.value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Transferências internas não afetam o saldo nem as receitas/despesas.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Annual evolution bar chart */}
       <Card className="card-shadow border-border/60">
