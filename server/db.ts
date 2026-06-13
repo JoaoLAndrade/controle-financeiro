@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   Category,
@@ -283,7 +283,7 @@ export async function getMonthlySummary(userId: number, year: number, month: num
         eq(transactions.userId, userId),
         gte(transactions.date, startDate),
         lte(transactions.date, endDate),
-        sql`${transactions.type} != 'transfer'` // transfers don't affect income/expense summary
+        ne(transactions.type, "transfer") // transfers don't affect income/expense summary
       )
     )
     .groupBy(transactions.type);
@@ -315,7 +315,7 @@ export async function getMonthlyEvolution(userId: number, months: number = 6) {
     .where(and(
       eq(transactions.userId, userId),
       gte(transactions.date, startDate),
-      sql`${transactions.type} != 'transfer'`
+      ne(transactions.type, "transfer")
     ))
     .groupBy(transactions.type, sql`YEAR(${transactions.date})`, sql`MONTH(${transactions.date})`);
 
@@ -758,7 +758,7 @@ export async function getTotalBalance(userId: number) {
       total: sql<string>`SUM(${transactions.amount})`,
     })
     .from(transactions)
-   .where(and(eq(transactions.userId, userId), sql`${transactions.type} != 'transfer'`))
+   .where(and(eq(transactions.userId, userId), ne(transactions.type, "transfer")))
     .groupBy(transactions.type);// Transfers are excluded from balance calculation — they are neutral movements between accounts
   const income = parseFloat(rows.find((r) => r.type === "income")?.total ?? "0");
   const expense = parseFloat(rows.find((r) => r.type === "expense")?.total ?? "0");
