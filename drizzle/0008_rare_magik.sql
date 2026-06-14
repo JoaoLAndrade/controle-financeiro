@@ -1,0 +1,1 @@
+ALTER TABLE `transactions` ADD `status` enum('confirmed','pending') DEFAULT 'confirmed' NOT NULL;

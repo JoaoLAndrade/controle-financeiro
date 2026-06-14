@@ -15,13 +15,13 @@ vi.mock("./db", () => ({
   getTransactions: vi.fn().mockResolvedValue([
     {
       id: 1, userId: 1, amount: "150.00", date: new Date(), description: "Supermercado",
-      categoryId: 1, type: "expense", createdAt: new Date(), updatedAt: new Date(),
-      categoryName: "Alimentação", categoryColor: "#f97316"
+      categoryId: 1, type: "expense", status: "confirmed", createdAt: new Date(), updatedAt: new Date(),
+      categoryName: "Alimentação", categoryColor: "#f97316", recurringId: null
     },
   ]),
   createTransaction: vi.fn().mockResolvedValue({
     id: 2, userId: 1, amount: "3000.00", date: new Date(), description: "Salário",
-    categoryId: null, type: "income", createdAt: new Date(), updatedAt: new Date()
+    categoryId: null, type: "income", status: "confirmed", createdAt: new Date(), updatedAt: new Date(), recurringId: null
   }),
   updateTransaction: vi.fn().mockResolvedValue(undefined),
   deleteTransaction: vi.fn().mockResolvedValue(undefined),

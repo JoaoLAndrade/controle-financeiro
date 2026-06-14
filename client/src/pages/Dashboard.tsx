@@ -272,6 +272,11 @@ export default function Dashboard() {
   const { data: goalsData = [], isLoading: goalsLoading } =
     trpc.goals.list.useQuery({ year, month });
 
+  const pendingCount = useMemo(
+    () => (recentTxs ?? []).filter((t) => t.status === "pending").length,
+    [recentTxs]
+  );
+
   const onSuccess = () => {
     utils.reports.summary.invalidate();
     utils.reports.totalBalance.invalidate();
@@ -357,34 +362,44 @@ export default function Dashboard() {
 
   function WidgetSummary() {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard
-          title="Saldo Total"
-          value={formatMoney(bal)}
-          icon={Wallet}
-          colorClass={bal >= 0 ? "text-foreground" : "text-expense"}
-          bgClass="bg-secondary"
-          loading={balanceLoading}
-          trendLabel="Saldo acumulado de todas as transações"
-        />
-        <SummaryCard
-          title="Receitas do Mês"
-          value={formatMoney(income)}
-          icon={TrendingUp}
-          colorClass="text-income"
-          bgClass="bg-income-soft"
-          loading={summaryLoading}
-          trendLabel={`Entradas em ${formatMonthYear(year, month)}`}
-        />
-        <SummaryCard
-          title="Despesas do Mês"
-          value={formatMoney(expense)}
-          icon={TrendingDown}
-          colorClass="text-expense"
-          bgClass="bg-expense-soft"
-          loading={summaryLoading}
-          trendLabel={`Saídas em ${formatMonthYear(year, month)}`}
-        />
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <SummaryCard
+            title="Saldo Total"
+            value={formatMoney(bal)}
+            icon={Wallet}
+            colorClass={bal >= 0 ? "text-foreground" : "text-expense"}
+            bgClass="bg-secondary"
+            loading={balanceLoading}
+            trendLabel="Saldo acumulado de todas as transações"
+          />
+          <SummaryCard
+            title="Receitas do Mês"
+            value={formatMoney(income)}
+            icon={TrendingUp}
+            colorClass="text-income"
+            bgClass="bg-income-soft"
+            loading={summaryLoading}
+            trendLabel={`Entradas em ${formatMonthYear(year, month)}`}
+          />
+          <SummaryCard
+            title="Despesas do Mês"
+            value={formatMoney(expense)}
+            icon={TrendingDown}
+            colorClass="text-expense"
+            bgClass="bg-expense-soft"
+            loading={summaryLoading}
+            trendLabel={`Saídas em ${formatMonthYear(year, month)}`}
+          />
+        </div>
+        {pendingCount > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-yellow-500/40 bg-yellow-500/5 text-yellow-700 dark:text-yellow-400 text-sm">
+            <Clock className="w-4 h-4 flex-shrink-0" />
+            <span>
+              <span className="font-semibold">{pendingCount}</span> transaç{pendingCount === 1 ? "ão pendente" : "ões pendentes"} este mês — ainda não confirmada{pendingCount === 1 ? "" : "s"} pelo banco.
+            </span>
+          </div>
+        )}
       </div>
     );
   }
@@ -549,9 +564,14 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {tx.description}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {tx.description}
+                      </p>
+                      {tx.status === "pending" && (
+                        <Clock className="w-3 h-3 flex-shrink-0 text-yellow-500" />
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {formatDate(tx.date)}
                     </p>
@@ -559,6 +579,7 @@ export default function Dashboard() {
                   <p
                     className={cn(
                       "text-sm font-semibold flex-shrink-0",
+                      tx.status === "pending" && "opacity-60",
                       tx.type === "income" ? "text-income" : tx.type === "transfer" ? "text-blue-500" : "text-expense"
                     )}
                   >

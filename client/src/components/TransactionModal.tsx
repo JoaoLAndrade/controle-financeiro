@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const schema = z.object({
   type: z.enum(["income", "expense", "transfer"]),
+  status: z.enum(["confirmed", "pending"]),
   amount: z.string().min(1, "Informe o valor").regex(/^\d+([.,]\d{1,2})?$/, "Valor inválido"),
   date: z.date().refine((d) => !!d, { message: "Informe a data" }),
   description: z.string().min(1, "Informe a descrição").max(255),
@@ -42,6 +43,7 @@ interface TransactionModalProps {
   transaction?: {
     id: number;
     type: "income" | "expense" | "transfer";
+    status: "confirmed" | "pending";
     amount: string;
     date: Date;
     description: string;
@@ -62,6 +64,7 @@ export default function TransactionModal({
     resolver: zodResolver(schema),
     defaultValues: {
       type: "expense",
+      status: "confirmed",
       amount: "",
       date: new Date(),
       description: "",
@@ -74,6 +77,7 @@ export default function TransactionModal({
       if (transaction) {
         form.reset({
           type: transaction.type,
+          status: transaction.status ?? "confirmed",
           amount: parseFloat(transaction.amount).toFixed(2),
           date: new Date(transaction.date),
           description: transaction.description,
@@ -82,6 +86,7 @@ export default function TransactionModal({
       } else {
         form.reset({
           type: "expense",
+          status: "confirmed",
           amount: "",
           date: new Date(),
           description: "",
@@ -120,6 +125,7 @@ export default function TransactionModal({
       updateMutation.mutate({
         id: transaction.id,
         type: values.type,
+        status: values.status,
         amount,
         date: values.date,
         description: values.description,
@@ -128,6 +134,7 @@ export default function TransactionModal({
     } else {
       createMutation.mutate({
         type: values.type,
+        status: values.status,
         amount,
         date: values.date,
         description: values.description,
@@ -137,6 +144,7 @@ export default function TransactionModal({
   };
 
   const selectedType = form.watch("type");
+  const selectedStatus = form.watch("status");
   const filteredCategories = categories?.filter(
     (c) => c.type === selectedType || c.type === "both" || (selectedType === "transfer" && c.type === "transfer")
   ) ?? [];
@@ -177,6 +185,51 @@ export default function TransactionModal({
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
+                </FormItem>
+              )}
+            />
+
+            {/* Status toggle */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => field.onChange("confirmed")}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-all",
+                        field.value === "confirmed"
+                          ? "border-green-500 bg-green-500/10 text-green-600 dark:text-green-400"
+                          : "border-border bg-transparent text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Confirmada
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => field.onChange("pending")}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-all",
+                        field.value === "pending"
+                          ? "border-yellow-500 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                          : "border-border bg-transparent text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <Clock className="w-4 h-4" />
+                      Pendente
+                    </button>
+                  </div>
+                  {field.value === "pending" && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Transações pendentes alteram o saldo, mas ainda não foram confirmadas pelo banco.
+                    </p>
+                  )}
+                  <FormMessage />
                 </FormItem>
               )}
             />

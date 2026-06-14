@@ -198,3 +198,15 @@
 - [x] Recurring.tsx: exibir ícone/cor neutros para type="transfer"; excluir do impacto mensal
 - [x] Dashboard.tsx: widget de recentes com ícone/cor neutros para transferências
 - [x] Reports.tsx: seção "Transferências Internas por Categoria" (só exibida quando houver dados)
+
+## Transações Pendentes (status: confirmed/pending)
+- [x] Schema: adicionar campo `status` enum("confirmed","pending") DEFAULT "confirmed" em transactions
+- [x] Migration SQL: ALTER TABLE transactions ADD status enum aplicada
+- [x] db.ts: incluir campo status em getTransactions, TransactionFilters, updateTransaction
+- [x] routers.ts: aceitar status em transactions.list, transactions.create e transactions.update
+- [x] TransactionModal: toggle Confirmada/Pendente (botões com ícone CheckCircle2/Clock)
+- [x] Transactions.tsx: badge amarelo "Pendente" + fundo suave + opacidade no valor
+- [x] Transactions.tsx: filtro por status (Todos / Confirmadas / Pendentes) + contador no summary
+- [x] Transactions.tsx: opção rápida "Confirmar" no dropdown da transação pendente
+- [x] Dashboard.tsx: aviso amarelo no WidgetSummary + ícone Clock nas recentes pendentes
+- [x] Testes: finance.test.ts atualizado com campo status nos mocks (47 testes passando)

@@ -46,6 +46,7 @@ export const transactions = mysqlTable("transactions", {
   description: varchar("description", { length: 255 }).notNull(),
   categoryId: int("categoryId"),
   type: mysqlEnum("type", ["income", "expense", "transfer"]).notNull(),
+  status: mysqlEnum("status", ["confirmed", "pending"]).notNull().default("confirmed"),
   recurringId: int("recurringId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

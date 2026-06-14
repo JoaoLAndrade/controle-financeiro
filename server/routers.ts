@@ -82,6 +82,7 @@ const transactionsRouter = router({
         endDate: z.date().optional(),
         type: z.enum(["income", "expense", "transfer"]).optional(),
         categoryId: z.number().optional(),
+        status: z.enum(["confirmed", "pending"]).optional(),
       }).optional()
     )
     .query(({ ctx, input }) =>
@@ -96,6 +97,7 @@ const transactionsRouter = router({
         description: z.string().min(1).max(255),
         categoryId: z.number().nullable().optional(),
         type: z.enum(["income", "expense", "transfer"]),
+        status: z.enum(["confirmed", "pending"]).default("confirmed"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -119,6 +121,7 @@ const transactionsRouter = router({
         description: z.string().min(1).max(255).optional(),
         categoryId: z.number().nullable().optional(),
         type: z.enum(["income", "expense", "transfer"]).optional(),
+        status: z.enum(["confirmed", "pending"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

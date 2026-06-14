@@ -3,8 +3,8 @@ import { formatDate, MONTH_NAMES } from "@/lib/format";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import {
-  ArrowDownRight, ArrowLeftRight, ArrowUpRight, CalendarClock, Filter, Loader2, MoreHorizontal,
-  Pencil, Plus, Search, Trash2, X
+  ArrowDownRight, ArrowLeftRight, ArrowUpRight, CalendarClock, CheckCircle2,
+  Clock, Filter, Loader2, MoreHorizontal, Pencil, Plus, Search, Trash2, X
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import TransactionModal from "@/components/TransactionModal";
 type EditingTransaction = {
   id: number;
   type: "income" | "expense" | "transfer";
+  status: "confirmed" | "pending";
   amount: string;
   date: Date;
   description: string;
@@ -40,6 +41,7 @@ export default function Transactions() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense" | "transfer">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "confirmed" | "pending">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -55,7 +57,10 @@ export default function Transactions() {
     endDate,
     type: typeFilter === "all" ? undefined : typeFilter as "income" | "expense" | "transfer",
     categoryId: categoryFilter !== "all" ? parseInt(categoryFilter) : undefined,
+    status: statusFilter === "all" ? undefined : statusFilter as "confirmed" | "pending",
   });
+
+  const utils = trpc.useUtils();
 
   const deleteMutation = trpc.transactions.delete.useMutation({
     onSuccess: () => {
@@ -71,7 +76,6 @@ export default function Transactions() {
     onError: (e) => toast.error(`Erro: ${e.message}`),
   });
 
-  const utils = trpc.useUtils();
   const onSuccess = () => {
     refetch();
     utils.reports.summary.invalidate();
@@ -95,6 +99,7 @@ export default function Transactions() {
   const totalIncome = filtered.filter((t) => t.type === "income").reduce((s, t) => s + parseFloat(t.amount), 0);
   const totalExpense = filtered.filter((t) => t.type === "expense").reduce((s, t) => s + parseFloat(t.amount), 0);
   const totalTransfer = filtered.filter((t) => t.type === "transfer").reduce((s, t) => s + parseFloat(t.amount), 0);
+  const pendingCount = filtered.filter((t) => t.status === "pending").length;
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
 
@@ -157,6 +162,18 @@ export default function Transactions() {
               </SelectContent>
             </Select>
 
+            {/* Status */}
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as "all" | "confirmed" | "pending")}>
+              <SelectTrigger className="h-8 w-36 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="confirmed">Confirmadas</SelectItem>
+                <SelectItem value="pending">Pendentes</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Category */}
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="h-8 w-40 text-xs">
@@ -202,6 +219,12 @@ export default function Transactions() {
         <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">{filtered.length} transações</span>
+            {pendingCount > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-yellow-500 text-yellow-600 dark:text-yellow-400 gap-1">
+                <Clock className="w-2.5 h-2.5" />
+                {pendingCount} pendente{pendingCount > 1 ? "s" : ""}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <div className="w-2 h-2 rounded-full bg-income" />
@@ -263,7 +286,10 @@ export default function Transactions() {
             {filtered.map((tx) => (
               <div
                 key={tx.id}
-                className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors group"
+                className={cn(
+                  "flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors group",
+                  tx.status === "pending" && "bg-yellow-500/5"
+                )}
               >
                 {/* Icon */}
                 <div className={cn(
@@ -280,8 +306,17 @@ export default function Transactions() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-medium text-foreground truncate">{tx.description}</p>
+                    {tx.status === "pending" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0 border-yellow-500 text-yellow-600 dark:text-yellow-400 gap-0.5"
+                      >
+                        <Clock className="w-2.5 h-2.5" />
+                        Pendente
+                      </Badge>
+                    )}
                     {tx.categoryName && (
                       <Badge
                         variant="secondary"
@@ -304,6 +339,7 @@ export default function Transactions() {
                 {/* Amount */}
                 <p className={cn(
                   "text-sm font-semibold flex-shrink-0",
+                  tx.status === "pending" ? "opacity-60" : "",
                   tx.type === "income" ? "text-income" : tx.type === "transfer" ? "text-blue-500" : "text-expense"
                 )}>
                   {tx.type === "income" ? "+" : tx.type === "transfer" ? "" : "-"}{formatMoney(parseFloat(tx.amount))}
@@ -320,9 +356,41 @@ export default function Transactions() {
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-36">
+                  <DropdownMenuContent align="end" className="w-44">
+                    {tx.status === "pending" && (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          trpc.transactions.update.useMutation;
+                          // Quick confirm via edit modal
+                          setEditingTx({
+                            id: tx.id,
+                            type: tx.type,
+                            status: "confirmed",
+                            amount: tx.amount,
+                            date: new Date(tx.date),
+                            description: tx.description,
+                            categoryId: tx.categoryId,
+                          });
+                          setModalOpen(true);
+                        }}
+                        className="gap-2 text-sm text-green-600 dark:text-green-400 focus:text-green-600"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Confirmar
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
-                      onClick={() => { setEditingTx(tx); setModalOpen(true); }}
+                      onClick={() => {
+                        setEditingTx({
+                          id: tx.id,
+                          type: tx.type,
+                          status: tx.status ?? "confirmed",
+                          amount: tx.amount,
+                          date: new Date(tx.date),
+                          description: tx.description,
+                          categoryId: tx.categoryId,
+                        });
+                        setModalOpen(true);
+                      }}
                       className="gap-2 text-sm"
                     >
                       <Pencil className="w-3.5 h-3.5" /> Editar

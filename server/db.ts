@@ -184,6 +184,7 @@ export interface TransactionFilters {
   endDate?: Date;
   type?: "income" | "expense" | "transfer";
   categoryId?: number;
+  status?: "confirmed" | "pending";
 }
 
 export type TransactionWithCategory = Omit<Transaction, never> & {
@@ -203,6 +204,8 @@ export async function getTransactions(
   if (filters.type) conditions.push(eq(transactions.type, filters.type));
   if (filters.categoryId) conditions.push(eq(transactions.categoryId, filters.categoryId));
 
+  if (filters.status) conditions.push(eq(transactions.status, filters.status));
+
   const rows = await db
     .select({
       id: transactions.id,
@@ -212,6 +215,7 @@ export async function getTransactions(
       description: transactions.description,
       categoryId: transactions.categoryId,
       type: transactions.type,
+      status: transactions.status,
       createdAt: transactions.createdAt,
       updatedAt: transactions.updatedAt,
       recurringId: transactions.recurringId,
@@ -245,7 +249,7 @@ export async function createTransaction(data: InsertTransaction): Promise<Transa
 export async function updateTransaction(
   id: number,
   userId: number,
-  data: Partial<Pick<InsertTransaction, "amount" | "date" | "description" | "categoryId" | "type">>
+  data: Partial<Pick<InsertTransaction, "amount" | "date" | "description" | "categoryId" | "type" | "status">>
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
